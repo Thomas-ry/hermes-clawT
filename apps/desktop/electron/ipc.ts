@@ -39,6 +39,21 @@ export function registerIpcHandlers(deps: {
     return { success: true }
   })
 
+  ipcMain.handle('hermes.config.get', async () => {
+    return deps.python.callJson({
+      module: 'hermes_cli.config',
+      fn: 'load_config',
+    })
+  })
+
+  ipcMain.handle('hermes.config.save', async (_evt, params) => {
+    return deps.python.callJson({
+      module: 'hermes_cli.config',
+      fn: 'save_config',
+      kwargs: { config: params },
+    })
+  })
+
   ipcMain.handle('hermes.cron.list', async (_evt, params) => {
     return deps.python.callJson({
       module: 'tools.cronjob_tools',

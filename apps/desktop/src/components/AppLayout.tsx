@@ -7,6 +7,7 @@ const NAV_ITEMS: Array<{ to: string; label: string }> = [
   { to: '/cron', label: 'Cron' },
   { to: '/skills', label: 'Skills' },
   { to: '/channels', label: 'Channels' },
+  { to: '/settings', label: 'Settings' },
   { to: '/logs', label: 'Logs' },
 ]
 

@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld('hermes', {
   api: {
     fetch: (req: unknown) => ipcRenderer.invoke('hermes.api.fetch', req),
   },
+  config: {
+    get: () => ipcRenderer.invoke('hermes.config.get'),
+    save: (config: unknown) => ipcRenderer.invoke('hermes.config.save', config),
+  },
   cron: {
     list: (params?: unknown) => ipcRenderer.invoke('hermes.cron.list', params),
     create: (params: unknown) => ipcRenderer.invoke('hermes.cron.create', params),

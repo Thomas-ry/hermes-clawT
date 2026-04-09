@@ -13,6 +13,10 @@ declare global {
       api: {
         fetch: (req: unknown) => Promise<{ status: number; headers: Record<string, string>; body: string }>
       }
+      config: {
+        get: () => Promise<Record<string, unknown>>
+        save: (config: Record<string, unknown>) => Promise<{ success: true }>
+      }
       cron: {
         list: (params?: unknown) => Promise<unknown>
         create: (params: unknown) => Promise<unknown>

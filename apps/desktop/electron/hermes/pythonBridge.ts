@@ -27,7 +27,16 @@ mod = importlib.import_module(call["module"])
 fn = getattr(mod, call["fn"])
 kwargs = call.get("kwargs") or {}
 out = fn(**kwargs)
-sys.stdout.write(out if isinstance(out, str) else json.dumps(out, ensure_ascii=False))
+if out is None:
+    sys.stdout.write(json.dumps({"success": True}))
+elif isinstance(out, str):
+    try:
+        json.loads(out)
+        sys.stdout.write(out)
+    except Exception:
+        sys.stdout.write(json.dumps({"success": True, "result": out}, ensure_ascii=False))
+else:
+    sys.stdout.write(json.dumps(out, ensure_ascii=False))
 `
     const res = spawnSync(
       this.runtime.pythonExe,

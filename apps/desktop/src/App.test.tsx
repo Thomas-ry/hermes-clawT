@@ -13,4 +13,5 @@ test('renders navigation', () => {
   expect(screen.getByRole('link', { name: 'Cron' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Skills' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Channels' })).toBeInTheDocument()
+  expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
 })

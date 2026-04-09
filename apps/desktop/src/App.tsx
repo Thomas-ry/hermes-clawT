@@ -6,6 +6,7 @@ import { CronPage } from './pages/CronPage'
 import { SkillsPage } from './pages/SkillsPage'
 import { ChannelsPage } from './pages/ChannelsPage'
 import { LogsPage } from './pages/LogsPage'
+import { SettingsPage } from './pages/SettingsPage'
 
 export function App() {
   return (
@@ -17,6 +18,7 @@ export function App() {
         <Route path="/cron" element={<CronPage />} />
         <Route path="/skills" element={<SkillsPage />} />
         <Route path="/channels" element={<ChannelsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
         <Route path="/logs" element={<LogsPage />} />
       </Route>
     </Routes>
