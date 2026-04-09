@@ -117,12 +117,12 @@ export function SettingsPage() {
           <label style={{ display: 'block', marginBottom: 10 }}>
             <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.backend')}</div>
             <select value={terminalBackend} onChange={(e) => setTerminalBackend(e.target.value)} style={{ width: '100%' }}>
-              <option value="local">local</option>
-              <option value="docker">docker</option>
-              <option value="ssh">ssh</option>
-              <option value="modal">modal</option>
-              <option value="daytona">daytona</option>
-              <option value="singularity">singularity</option>
+              <option value="local">{t('settings.backendLocal')}</option>
+              <option value="docker">{t('settings.backendDocker')}</option>
+              <option value="ssh">{t('settings.backendSsh')}</option>
+              <option value="modal">{t('settings.backendModal')}</option>
+              <option value="daytona">{t('settings.backendDaytona')}</option>
+              <option value="singularity">{t('settings.backendSingularity')}</option>
             </select>
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>

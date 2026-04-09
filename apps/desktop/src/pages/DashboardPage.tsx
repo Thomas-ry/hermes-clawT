@@ -124,8 +124,9 @@ export function DashboardPage() {
         </div>
       </section>
 
+      <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 8 }}>{t('dashboard.gatewaySnapshot')}</div>
       <pre style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12, whiteSpace: 'pre-wrap' }}>
-        {status ? JSON.stringify(status, null, 2) : 'Loading...'}
+        {status ? JSON.stringify(status, null, 2) : t('dashboard.snapshotLoading')}
       </pre>
     </div>
   )

@@ -28,6 +28,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -81,6 +83,14 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
         with:
@@ -93,6 +103,16 @@ jobs:
           find dist-artifacts -type f \
             \( -name 'latest*.yml' -o -name '*.exe' -o -name '*.blockmap' -o -name '*.zip' -o -name '*.dmg' -o -name '*.AppImage' -o -name '*.deb' \) \
             -exec cp {} pages/updates/ \;
+
+      - name: Generate release metadata
+        shell: bash
+        run: |
+          VERSION='${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}'
+          VERSION="${VERSION#v}"
+          node scripts/generate-release-assets.mjs \
+            --version "$VERSION" \
+            --repo-url "https://github.com/Thomas-ry/hermes-clawT" \
+            --output-dir pages/updates
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -112,6 +132,9 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
           name: ${{ github.event_name == 'workflow_dispatch' && format('clawT v{0}', inputs.version) || format('clawT {0}', github.ref_name) }}
           draft: true
+          body_path: pages/updates/release-notes.md
           files: |
             dist-artifacts/**/*
-          generate_release_notes: true
+            pages/updates/release-notes.md
+            pages/updates/release-notes.json
+            pages/updates/latest.json

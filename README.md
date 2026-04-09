@@ -122,6 +122,7 @@ git push origin v0.1.1
 - 现在的更新源已切到 `generic provider`
 - 默认更新地址是：`https://thomas-ry.github.io/hermes-clawT/updates`
 - `release.yml` 会把 `latest*.yml`、安装包和 blockmap 部署到 GitHub Pages，供普通用户公开访问
+- 同一个工作流还会生成 `release-notes.md`、`release-notes.json`、`latest.json`，用于更新公告和外部 changelog 展示
 - 如果后面要换成 Cloudflare R2、S3 或自有 CDN，只需要改 `apps/desktop/electron-builder.json5` 里的 `publish.url`
 
 ### GitHub Pages 准备

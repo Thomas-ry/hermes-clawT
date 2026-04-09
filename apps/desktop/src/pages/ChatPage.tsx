@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { hermesApiChat } from '../lib/hermesClient'
 import { useI18n } from '../i18n'
+import { getChatRoleLabel, type ChatRole } from '../lib/chatRole'
 
-type ChatMsg = { role: 'user' | 'assistant' | 'system'; content: string }
+type ChatMsg = { role: ChatRole; content: string }
 
 export function ChatPage() {
   const { t } = useI18n()
@@ -43,7 +44,7 @@ export function ChatPage() {
       <div style={{ overflow: 'auto', padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.04)' }}>
         {visibleMessages.map((m, idx) => (
           <div key={idx} style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 12, opacity: 0.75 }}>{m.role.toUpperCase()}</div>
+            <div style={{ fontSize: 12, opacity: 0.75 }}>{getChatRoleLabel(m.role, t)}</div>
             <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{m.content}</div>
           </div>
         ))}

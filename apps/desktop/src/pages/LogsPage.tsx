@@ -22,9 +22,9 @@ export function LogsPage() {
 
   const text = useMemo(() => {
     return lines
-      .map((l) => `[${l.ts}] ${l.stream.toUpperCase()} ${l.line}`)
+      .map((l) => `[${l.ts}] ${l.stream === 'stdout' ? t('logs.stdout') : t('logs.stderr')} ${l.line}`)
       .join('\n')
-  }, [lines])
+  }, [lines, t])
 
   return (
     <div style={{ maxWidth: 1100 }}>
