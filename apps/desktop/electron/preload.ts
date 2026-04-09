@@ -4,6 +4,17 @@ type Unsubscribe = () => void
 
 contextBridge.exposeInMainWorld('hermes', {
   status: () => ipcRenderer.invoke('hermes.status'),
+  updater: {
+    status: () => ipcRenderer.invoke('clawt.updater.status'),
+    check: () => ipcRenderer.invoke('clawt.updater.check'),
+    download: () => ipcRenderer.invoke('clawt.updater.download'),
+    install: () => ipcRenderer.invoke('clawt.updater.install'),
+    onState: (cb: (state: unknown) => void): Unsubscribe => {
+      const listener = (_evt: unknown, state: unknown) => cb(state)
+      ipcRenderer.on('clawt.updater.state', listener)
+      return () => ipcRenderer.off('clawt.updater.state', listener)
+    },
+  },
   gateway: {
     start: () => ipcRenderer.invoke('hermes.gateway.start'),
     stop: () => ipcRenderer.invoke('hermes.gateway.stop'),

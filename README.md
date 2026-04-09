@@ -104,6 +104,26 @@ git push origin v0.1.1
 - Linux：需要完整 metadata，当前仓库已补齐
 - Windows：建议优先在 GitHub Actions 的 `windows-latest` 上产包，最稳定
 
+## 自动更新
+
+- 桌面端已接入 `electron-updater`
+- `Dashboard` 页面可以：
+  - 检查更新
+  - 下载更新
+  - 重启并安装更新
+- 打包配置已启用：
+  - Windows `NSIS`
+  - Linux `AppImage / deb`
+  - macOS `dmg + zip`
+
+### 当前注意事项
+
+- 现在的发布源是私有 GitHub Releases
+- 根据 `electron-builder` 官方文档，私有 GitHub 更新仓库需要客户端机器具备 `GH_TOKEN`，不适合面向普通终端用户直接发放
+- 如果后面要给普通用户无感更新，建议下一步把 update provider 改成：
+  - 公有 GitHub Releases，或
+  - 自己的静态更新源（generic provider / CDN）
+
 ## 运行时说明
 
 - Hermes Gateway 由 Electron Main 进程托管（自动启动/重启），并启用本机 OpenAI 兼容 API server。

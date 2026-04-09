@@ -4,6 +4,13 @@ declare global {
   interface Window {
     hermes: {
       status: () => Promise<unknown>
+      updater: {
+        status: () => Promise<unknown>
+        check: () => Promise<unknown>
+        download: () => Promise<unknown>
+        install: () => Promise<unknown>
+        onState: (cb: (state: unknown) => void) => () => void
+      }
       gateway: {
         start: () => Promise<unknown>
         stop: () => Promise<unknown>

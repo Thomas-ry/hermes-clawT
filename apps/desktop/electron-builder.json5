@@ -4,6 +4,7 @@
   "appId": "com.thomas.clawt",
   "asar": true,
   "productName": "clawT",
+  "electronUpdaterCompatibility": ">=2.16",
   "publish": [
     {
       "provider": "github",
@@ -33,7 +34,8 @@
   "mac": {
     "icon": "build/icon.icns",
     "target": [
-      "dmg"
+      "dmg",
+      "zip"
     ],
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },

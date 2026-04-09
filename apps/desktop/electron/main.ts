@@ -8,6 +8,7 @@ import { resolveHermesRuntimePaths } from './hermes/runtimePaths'
 import { HermesGatewayManager } from './hermes/gatewayManager'
 import { HermesPythonBridge } from './hermes/pythonBridge'
 import { loadOrCreateApiServerKey } from './hermes/secrets'
+import { ClawTUpdater } from './hermes/updater'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -113,8 +114,10 @@ app.whenReady().then(async () => {
   })
   const gateway = new HermesGatewayManager(runtime)
   const python = new HermesPythonBridge(runtime)
+  const updater = new ClawTUpdater()
+  updater.init()
 
-  registerIpcHandlers({ runtime, gateway, python })
+  registerIpcHandlers({ runtime, gateway, python, updater })
 
   createWindow()
 

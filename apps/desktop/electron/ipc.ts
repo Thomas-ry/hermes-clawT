@@ -13,6 +13,12 @@ export function registerIpcHandlers(deps: {
   runtime: HermesRuntimePaths
   gateway: HermesGatewayManager
   python: HermesPythonBridge
+  updater: {
+    getState: () => unknown
+    checkForUpdates: () => Promise<unknown>
+    downloadUpdate: () => Promise<unknown>
+    installUpdate: () => unknown
+  }
 }): void {
   ipcMain.handle('hermes.status', async () => {
     return {
@@ -22,12 +28,17 @@ export function registerIpcHandlers(deps: {
         gatewayPort: deps.runtime.gatewayPort,
       },
       gateway: deps.gateway.status(),
+      updater: deps.updater.getState(),
     }
   })
 
   ipcMain.handle('hermes.gateway.start', async () => deps.gateway.start())
   ipcMain.handle('hermes.gateway.stop', async () => deps.gateway.stop())
   ipcMain.handle('hermes.gateway.restart', async () => deps.gateway.restart())
+  ipcMain.handle('clawt.updater.status', async () => deps.updater.getState())
+  ipcMain.handle('clawt.updater.check', async () => deps.updater.checkForUpdates())
+  ipcMain.handle('clawt.updater.download', async () => deps.updater.downloadUpdate())
+  ipcMain.handle('clawt.updater.install', async () => deps.updater.installUpdate())
 
   ipcMain.handle('hermes.api.fetch', async (_evt, req) => apiProxyFetch(deps.runtime, req))
 

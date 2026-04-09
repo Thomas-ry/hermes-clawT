@@ -5,6 +5,7 @@ export type HermesStatus = {
     gatewayPort: number
   }
   gateway: unknown
+  updater: unknown
 }
 
 export async function hermesStatus(): Promise<HermesStatus> {
