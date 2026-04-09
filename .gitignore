@@ -1,0 +1,10 @@
+.DS_Store
+.runtime-build/
+node_modules/
+**/node_modules/
+apps/desktop/release/
+apps/desktop/resources/hermes-agent/
+apps/desktop/dist/
+apps/desktop/dist-electron/
+pnpm-debug.log
+npm-debug.log

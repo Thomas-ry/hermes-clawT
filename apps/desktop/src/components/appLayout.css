@@ -1,0 +1,48 @@
+.hc-root {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  height: 100vh;
+  background: #0b0f19;
+  color: #e7ecff;
+}
+
+.hc-sidebar {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.hc-brand {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-bottom: 16px;
+}
+
+.hc-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hc-nav-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.hc-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.hc-nav-item.active {
+  background: rgba(99, 102, 241, 0.22);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  opacity: 1;
+}
+
+.hc-main {
+  padding: 20px 24px;
+  overflow: auto;
+}

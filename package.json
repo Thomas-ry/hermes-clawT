@@ -1,0 +1,17 @@
+{
+  "name": "hermes-clawt",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "type": "module",
+  "scripts": {
+    "runtime:build": "node ./scripts/build-hermes-runtime.mjs",
+    "dev": "pnpm -C apps/desktop dev",
+    "build": "pnpm -C apps/desktop build",
+    "lint": "pnpm -C apps/desktop lint",
+    "test": "pnpm -C apps/desktop test",
+    "package": "pnpm -C apps/desktop package",
+    "package:mac": "pnpm -C apps/desktop package:mac",
+    "package:win": "pnpm -C apps/desktop package:win",
+    "package:linux": "pnpm -C apps/desktop package:linux"
+  }
+}
