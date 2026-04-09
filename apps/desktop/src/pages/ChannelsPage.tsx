@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useI18n } from '../i18n'
 
 type EnvMap = Record<string, string>
 
@@ -88,6 +89,7 @@ const CHANNELS: ChannelConfig[] = [
 ]
 
 export function ChannelsPage() {
+  const { t } = useI18n()
   const [env, setEnv] = useState<EnvMap>({})
   const [draft, setDraft] = useState<EnvMap>({})
   const [error, setError] = useState<string | null>(null)
@@ -116,7 +118,7 @@ export function ChannelsPage() {
       }
       await window.hermes.env.set(payload)
       await window.hermes.gateway.restart()
-      setSaved('Channels saved. Gateway restarted.')
+      setSaved(t('channels.saved'))
       await load()
     } catch (e) {
       setError(String(e))
@@ -129,10 +131,8 @@ export function ChannelsPage() {
 
   return (
     <div style={{ maxWidth: 1000 }}>
-      <h2>Channels</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>
-        Configure messaging integrations in Hermes env. Saving restarts the gateway so changes take effect immediately.
-      </p>
+      <h2>{t('channels.title')}</h2>
+      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('channels.description')}</p>
 
       {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
       {saved ? <div style={{ color: '#b7ffcc' }}>{saved}</div> : null}
@@ -141,7 +141,23 @@ export function ChannelsPage() {
         {CHANNELS.map((channel) => (
           <section key={channel.title} style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
             <h3 style={{ marginTop: 0 }}>{channel.title}</h3>
-            <p style={{ opacity: 0.75, marginTop: 4 }}>{channel.description}</p>
+            <p style={{ opacity: 0.75, marginTop: 4 }}>
+              {channel.title === 'Telegram'
+                ? t('channels.telegramDescription')
+                : channel.title === 'Discord'
+                  ? t('channels.discordDescription')
+                  : channel.title === 'Slack'
+                    ? t('channels.slackDescription')
+                    : channel.title === 'Signal'
+                      ? t('channels.signalDescription')
+                      : channel.title === 'WhatsApp'
+                        ? t('channels.whatsappDescription')
+                        : channel.title === 'Email'
+                          ? t('channels.emailDescription')
+                          : channel.title === 'Matrix'
+                            ? t('channels.matrixDescription')
+                            : channel.description}
+            </p>
             {channel.fields.map((field) => (
               <label key={field.key} style={{ display: 'block', marginBottom: 10 }}>
                 <div style={{ fontSize: 12, opacity: 0.8 }}>{field.key}</div>
@@ -158,12 +174,12 @@ export function ChannelsPage() {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-        <button onClick={save}>Save & Restart Gateway</button>
-        <button onClick={load}>Reload</button>
+        <button onClick={save}>{t('channels.saveRestart')}</button>
+        <button onClick={load}>{t('channels.reload')}</button>
       </div>
 
       <details style={{ marginTop: 16 }}>
-        <summary style={{ cursor: 'pointer', opacity: 0.85 }}>Current env snapshot</summary>
+        <summary style={{ cursor: 'pointer', opacity: 0.85 }}>{t('channels.snapshot')}</summary>
         <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(env, null, 2)}</pre>
       </details>
     </div>

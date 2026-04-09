@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useI18n } from '../i18n'
 
 type CronJob = {
   job_id: string
@@ -42,6 +43,7 @@ const panelStyle: CSSProperties = {
 }
 
 export function CronPage() {
+  const { t } = useI18n()
   const [jobs, setJobs] = useState<CronJob[]>([])
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -180,39 +182,39 @@ export function CronPage() {
 
   return (
     <div style={{ maxWidth: 1120 }}>
-      <h2>Cron</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>Create, inspect, update, run, pause, and remove Hermes cron jobs.</p>
+      <h2>{t('cron.title')}</h2>
+      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('cron.description')}</p>
 
       {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 16, marginTop: 16 }}>
         <div style={panelStyle}>
-          <h3 style={{ marginTop: 0 }}>Create Job</h3>
+          <h3 style={{ marginTop: 0 }}>{t('cron.createJob')}</h3>
           <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Name</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.name')}</div>
             <input value={name} onChange={(e) => setName(e.target.value)} style={{ width: '100%' }} />
           </label>
           <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Schedule</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.schedule')}</div>
             <input value={schedule} onChange={(e) => setSchedule(e.target.value)} style={{ width: '100%' }} />
           </label>
           <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Deliver</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.deliver')}</div>
             <input value={deliver} onChange={(e) => setDeliver(e.target.value)} style={{ width: '100%' }} />
           </label>
           <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Prompt</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.prompt')}</div>
             <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', minHeight: 120 }} />
           </label>
           <button onClick={createJob} disabled={busyAction === 'create'}>
-            {busyAction === 'create' ? 'Creating…' : 'Create'}
+            {busyAction === 'create' ? t('cron.creating') : t('cron.create')}
           </button>
         </div>
 
         <div style={panelStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ marginTop: 0 }}>Jobs</h3>
-            <button onClick={() => refresh(selectedJobId)}>Refresh</button>
+            <h3 style={{ marginTop: 0 }}>{t('cron.jobs')}</h3>
+            <button onClick={() => refresh(selectedJobId)}>{t('cron.refresh')}</button>
           </div>
           <div style={{ display: 'grid', gap: 10 }}>
             {jobs.map((job) => (
@@ -234,79 +236,79 @@ export function CronPage() {
                 <div style={{ fontWeight: 600 }}>{job.name}</div>
                 <div style={{ fontSize: 12, opacity: 0.72 }}>{job.schedule}</div>
                 <div style={{ fontSize: 12, opacity: 0.72 }}>
-                  {job.state ?? 'scheduled'} {job.next_run_at ? `· next ${job.next_run_at}` : ''}
+                  {job.state ?? t('cron.scheduled')} {job.next_run_at ? `· ${t('cron.next')} ${job.next_run_at}` : ''}
                 </div>
               </button>
             ))}
-            {jobs.length === 0 ? <div style={{ opacity: 0.7 }}>No jobs yet.</div> : null}
+            {jobs.length === 0 ? <div style={{ opacity: 0.7 }}>{t('cron.noJobs')}</div> : null}
           </div>
         </div>
       </div>
 
       <div style={{ ...panelStyle, marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Selected Job</h3>
+        <h3 style={{ marginTop: 0 }}>{t('cron.selectedJob')}</h3>
         {selectedJob ? (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Name</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.name')}</div>
                   <input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%' }} />
                 </label>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Schedule</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.schedule')}</div>
                   <input value={editSchedule} onChange={(e) => setEditSchedule(e.target.value)} style={{ width: '100%' }} />
                 </label>
                 <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>Deliver</div>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.deliver')}</div>
                   <input value={editDeliver} onChange={(e) => setEditDeliver(e.target.value)} style={{ width: '100%' }} />
                 </label>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>Prompt preview</div>
+                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>{t('cron.promptPreview')}</div>
                 <textarea value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} style={{ width: '100%', minHeight: 130 }} />
                 <div style={{ fontSize: 12, opacity: 0.65, marginTop: 6 }}>
-                  Skills: {selectedJob.skills?.length ? selectedJob.skills.join(', ') : 'none'}
+                  {t('cron.skills')}: {selectedJob.skills?.length ? selectedJob.skills.join(', ') : t('cron.none')}
                 </div>
                 <div style={{ fontSize: 12, opacity: 0.65 }}>
-                  Script: {selectedJob.script ?? 'none'}
+                  {t('cron.script')}: {selectedJob.script ?? t('cron.none')}
                 </div>
                 <div style={{ fontSize: 12, opacity: 0.65 }}>
-                  Repeat: {selectedJob.repeat ?? 'default'}
+                  {t('cron.repeat')}: {selectedJob.repeat ?? t('cron.defaultValue')}
                 </div>
                 {selectedJob.paused_reason ? (
-                  <div style={{ fontSize: 12, opacity: 0.65 }}>Paused reason: {selectedJob.paused_reason}</div>
+                  <div style={{ fontSize: 12, opacity: 0.65 }}>{t('cron.pausedReason')}: {selectedJob.paused_reason}</div>
                 ) : null}
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
               <button onClick={saveJobEdits} disabled={busyAction === `update:${selectedJob.job_id}`}>
-                {busyAction === `update:${selectedJob.job_id}` ? 'Saving…' : 'Save changes'}
+                {busyAction === `update:${selectedJob.job_id}` ? t('cron.saving') : t('cron.saveChanges')}
               </button>
               <button onClick={() => runJobAction('run', selectedJob.job_id)} disabled={busyAction === `run:${selectedJob.job_id}`}>
-                Run now
+                {t('cron.runNow')}
               </button>
               {selectedJob.state === 'paused' ? (
                 <button onClick={() => runJobAction('resume', selectedJob.job_id)} disabled={busyAction === `resume:${selectedJob.job_id}`}>
-                  Resume
+                  {t('cron.resume')}
                 </button>
               ) : (
                 <button onClick={() => runJobAction('pause', selectedJob.job_id)} disabled={busyAction === `pause:${selectedJob.job_id}`}>
-                  Pause
+                  {t('cron.pause')}
                 </button>
               )}
               <button onClick={() => runJobAction('remove', selectedJob.job_id)} disabled={busyAction === `remove:${selectedJob.job_id}`}>
-                Delete
+                {t('cron.delete')}
               </button>
               <button onClick={() => loadOutputs(selectedJob.job_id, selectedOutputPath)} disabled={busyAction !== null}>
-                Refresh outputs
+                {t('cron.refreshOutputs')}
               </button>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '0.85fr 1.15fr', gap: 16, marginTop: 16 }}>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>Saved outputs</div>
+                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>{t('cron.savedOutputs')}</div>
                 <div style={{ display: 'grid', gap: 8 }}>
                   {outputs.map((file) => (
                     <button
@@ -327,19 +329,19 @@ export function CronPage() {
                       {file.fileName}
                     </button>
                   ))}
-                  {outputs.length === 0 ? <div style={{ opacity: 0.7 }}>No saved outputs for this job yet.</div> : null}
+                  {outputs.length === 0 ? <div style={{ opacity: 0.7 }}>{t('cron.noOutputs')}</div> : null}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>Output preview</div>
+                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>{t('cron.outputPreview')}</div>
                 <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 360, overflow: 'auto', margin: 0 }}>
-                  {selectedOutputContent || 'Pick an output to preview it here.'}
+                  {selectedOutputContent || t('cron.outputHint')}
                 </pre>
               </div>
             </div>
           </>
         ) : (
-          <div style={{ opacity: 0.7 }}>Pick a job to inspect or edit it.</div>
+          <div style={{ opacity: 0.7 }}>{t('cron.pickJob')}</div>
         )}
       </div>
     </div>

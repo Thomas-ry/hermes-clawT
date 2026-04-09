@@ -1,21 +1,24 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useI18n } from '../i18n'
 import './appLayout.css'
 
-const NAV_ITEMS: Array<{ to: string; label: string }> = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/chat', label: 'Chat' },
-  { to: '/cron', label: 'Cron' },
-  { to: '/skills', label: 'Skills' },
-  { to: '/channels', label: 'Channels' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/logs', label: 'Logs' },
+const NAV_ITEMS: Array<{ to: string; labelKey: string }> = [
+  { to: '/dashboard', labelKey: 'nav.dashboard' },
+  { to: '/chat', labelKey: 'nav.chat' },
+  { to: '/cron', labelKey: 'nav.cron' },
+  { to: '/skills', labelKey: 'nav.skills' },
+  { to: '/channels', labelKey: 'nav.channels' },
+  { to: '/settings', labelKey: 'nav.settings' },
+  { to: '/logs', labelKey: 'nav.logs' },
 ]
 
 export function AppLayout() {
+  const { t } = useI18n()
+
   return (
     <div className="hc-root">
       <aside className="hc-sidebar">
-        <div className="hc-brand">clawT</div>
+        <div className="hc-brand">{t('app.brand')}</div>
         <nav className="hc-nav">
           {NAV_ITEMS.map((item) => (
             <NavLink
@@ -23,7 +26,7 @@ export function AppLayout() {
               to={item.to}
               className={({ isActive }) => `hc-nav-item ${isActive ? 'active' : ''}`}
             >
-              {item.label}
+              {t(item.labelKey)}
             </NavLink>
           ))}
         </nav>

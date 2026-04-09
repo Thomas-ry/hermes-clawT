@@ -1,13 +1,20 @@
 import { render, screen } from '@testing-library/react'
 import { HashRouter } from 'react-router-dom'
-import { test, expect } from 'vitest'
+import { beforeEach, test, expect } from 'vitest'
 import { App } from './App'
+import { I18nProvider } from './i18n'
+
+beforeEach(() => {
+  window.localStorage.removeItem('clawt.language')
+})
 
 test('renders navigation', () => {
   render(
-    <HashRouter>
-      <App />
-    </HashRouter>,
+    <I18nProvider>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </I18nProvider>,
   )
   expect(screen.getByRole('link', { name: 'Chat' })).toBeInTheDocument()
   expect(screen.getByRole('link', { name: 'Cron' })).toBeInTheDocument()

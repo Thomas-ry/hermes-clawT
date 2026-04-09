@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useI18n } from '../i18n'
 
 type ConfigShape = {
   model?: string
@@ -13,6 +14,7 @@ type ConfigShape = {
 }
 
 export function SettingsPage() {
+  const { language, setLanguage, t } = useI18n()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
@@ -61,7 +63,7 @@ export function SettingsPage() {
         },
       }
       await window.hermes.config.save(next as Record<string, unknown>)
-      setSaved('Settings saved.')
+      setSaved(t('settings.saved'))
       setConfig(next)
     } catch (e) {
       setError(String(e))
@@ -74,19 +76,29 @@ export function SettingsPage() {
 
   return (
     <div style={{ maxWidth: 960 }}>
-      <h2>Settings</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>
-        Edit Hermes runtime settings stored in <code>config.yaml</code>.
-      </p>
+      <h2>{t('settings.title')}</h2>
+      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('settings.description')} <code>config.yaml</code>.</p>
 
       {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
       {saved ? <div style={{ color: '#b7ffcc' }}>{saved}</div> : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
         <div style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
-          <h3 style={{ marginTop: 0 }}>Model</h3>
+          <h3 style={{ marginTop: 0 }}>{t('settings.languageTitle')}</h3>
+          <p style={{ opacity: 0.8, marginTop: 4 }}>{t('settings.languageDescription')}</p>
           <label style={{ display: 'block', marginBottom: 10 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Default model</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('app.language')}</div>
+            <select value={language} onChange={(e) => setLanguage(e.target.value as 'en' | 'zh')} style={{ width: '100%' }}>
+              <option value="en">{t('app.english')}</option>
+              <option value="zh">{t('app.chinese')}</option>
+            </select>
+          </label>
+        </div>
+
+        <div style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
+          <h3 style={{ marginTop: 0 }}>{t('settings.modelTitle')}</h3>
+          <label style={{ display: 'block', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.defaultModel')}</div>
             <input
               value={model}
               onChange={(e) => setModel(e.target.value)}
@@ -95,15 +107,15 @@ export function SettingsPage() {
             />
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Max turns</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.maxTurns')}</div>
             <input value={maxTurns} onChange={(e) => setMaxTurns(e.target.value)} style={{ width: '100%' }} />
           </label>
         </div>
 
         <div style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
-          <h3 style={{ marginTop: 0 }}>Terminal</h3>
+          <h3 style={{ marginTop: 0 }}>{t('settings.terminalTitle')}</h3>
           <label style={{ display: 'block', marginBottom: 10 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Backend</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.backend')}</div>
             <select value={terminalBackend} onChange={(e) => setTerminalBackend(e.target.value)} style={{ width: '100%' }}>
               <option value="local">local</option>
               <option value="docker">docker</option>
@@ -114,19 +126,19 @@ export function SettingsPage() {
             </select>
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Timeout (seconds)</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.timeout')}</div>
             <input value={terminalTimeout} onChange={(e) => setTerminalTimeout(e.target.value)} style={{ width: '100%' }} />
           </label>
           <label style={{ display: 'block', marginBottom: 10 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>Working directory</div>
+            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('settings.workingDirectory')}</div>
             <input value={terminalCwd} onChange={(e) => setTerminalCwd(e.target.value)} style={{ width: '100%' }} />
           </label>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-        <button onClick={save} disabled={loading}>Save</button>
-        <button onClick={load} disabled={loading}>Reload</button>
+        <button onClick={save} disabled={loading}>{t('settings.save')}</button>
+        <button onClick={load} disabled={loading}>{t('settings.reload')}</button>
       </div>
     </div>
   )

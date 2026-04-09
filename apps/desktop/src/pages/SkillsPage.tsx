@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useI18n } from '../i18n'
 
 type SkillRow = { name: string; description?: string; category?: string }
 type SkillViewResult = {
@@ -17,18 +18,6 @@ type SkillViewResult = {
 }
 type DisabledSkillsResult = { success?: boolean; disabled?: string[] }
 
-const PLATFORM_OPTIONS = [
-  { value: 'global', label: 'Global default' },
-  { value: 'cli', label: 'CLI' },
-  { value: 'telegram', label: 'Telegram' },
-  { value: 'discord', label: 'Discord' },
-  { value: 'slack', label: 'Slack' },
-  { value: 'signal', label: 'Signal' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'email', label: 'Email' },
-  { value: 'matrix', label: 'Matrix' },
-] as const
-
 const panelStyle: CSSProperties = {
   background: 'rgba(255,255,255,0.04)',
   padding: 12,
@@ -36,6 +25,7 @@ const panelStyle: CSSProperties = {
 }
 
 export function SkillsPage() {
+  const { t } = useI18n()
   const [disabledSkills, setDisabledSkills] = useState<string[]>([])
   const [skills, setSkills] = useState<SkillRow[]>([])
   const [selectedSkillName, setSelectedSkillName] = useState<string | null>(null)
@@ -44,6 +34,18 @@ export function SkillsPage() {
   const [category, setCategory] = useState<string>('')
   const [platform, setPlatform] = useState<string>('global')
   const [busySkillName, setBusySkillName] = useState<string | null>(null)
+
+  const platformOptions = [
+    { value: 'global', label: t('skills.global') },
+    { value: 'cli', label: t('skills.cli') },
+    { value: 'telegram', label: t('skills.telegram') },
+    { value: 'discord', label: t('skills.discord') },
+    { value: 'slack', label: t('skills.slack') },
+    { value: 'signal', label: t('skills.signal') },
+    { value: 'whatsapp', label: t('skills.whatsapp') },
+    { value: 'email', label: t('skills.email') },
+    { value: 'matrix', label: t('skills.matrix') },
+  ]
 
   async function loadSkill(name: string) {
     try {
@@ -119,14 +121,14 @@ export function SkillsPage() {
 
   return (
     <div style={{ maxWidth: 1120 }}>
-      <h2>Skills</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>Browse installed skills, inspect their `SKILL.md`, and enable or disable them per surface.</p>
+      <h2>{t('skills.title')}</h2>
+      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('skills.description')}</p>
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 12 }}>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ opacity: 0.8 }}>Scope</span>
+          <span style={{ opacity: 0.8 }}>{t('skills.scope')}</span>
           <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
-            {PLATFORM_OPTIONS.map((option) => (
+            {platformOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -134,32 +136,32 @@ export function SkillsPage() {
           </select>
         </label>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ opacity: 0.8 }}>Category</span>
-          <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="(optional)" />
+          <span style={{ opacity: 0.8 }}>{t('skills.category')}</span>
+          <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t('skills.optional')} />
         </label>
-        <button onClick={() => refresh(selectedSkillName)}>Refresh</button>
+        <button onClick={() => refresh(selectedSkillName)}>{t('skills.refresh')}</button>
       </div>
 
       {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
 
       <div style={{ display: 'grid', gridTemplateColumns: '0.8fr 1fr 1.2fr', gap: 16, marginTop: 16 }}>
         <div style={panelStyle}>
-          <h3 style={{ marginTop: 0 }}>Categories</h3>
+          <h3 style={{ marginTop: 0 }}>{t('skills.categories')}</h3>
           <div style={{ display: 'grid', gap: 8 }}>
             {categories.map((item) => (
               <div key={item} style={{ opacity: 0.85 }}>
                 {item}
               </div>
             ))}
-            {categories.length === 0 ? <div style={{ opacity: 0.7 }}>No categories found.</div> : null}
+            {categories.length === 0 ? <div style={{ opacity: 0.7 }}>{t('skills.noCategories')}</div> : null}
           </div>
           <div style={{ fontSize: 12, opacity: 0.65, marginTop: 12 }}>
-            Disabled in this scope: {disabledSkills.length}
+            {t('skills.disabledInScope')}: {disabledSkills.length}
           </div>
         </div>
 
         <div style={panelStyle}>
-          <h3 style={{ marginTop: 0 }}>Skills ({skills.length})</h3>
+          <h3 style={{ marginTop: 0 }}>{t('skills.skillsCount')} ({skills.length})</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             {skills.map((skill) => (
               <div
@@ -178,7 +180,7 @@ export function SkillsPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                     <div style={{ fontWeight: 600 }}>{skill.name}</div>
                     <div style={{ fontSize: 12, opacity: 0.7 }}>
-                      {disabledSkills.includes(skill.name) ? 'Disabled' : 'Enabled'}
+                      {disabledSkills.includes(skill.name) ? t('skills.disabled') : t('skills.enabled')}
                     </div>
                   </div>
                   <div style={{ opacity: 0.7, fontSize: 12 }}>{skill.category ?? ''}</div>
@@ -190,19 +192,19 @@ export function SkillsPage() {
                   style={{ marginTop: 10 }}
                 >
                   {busySkillName === skill.name
-                    ? 'Saving…'
+                    ? t('skills.saving')
                     : disabledSkills.includes(skill.name)
-                      ? 'Enable skill'
-                      : 'Disable skill'}
+                      ? t('skills.enableSkill')
+                      : t('skills.disableSkill')}
                 </button>
               </div>
             ))}
-            {skills.length === 0 ? <div style={{ opacity: 0.7 }}>No skills found.</div> : null}
+            {skills.length === 0 ? <div style={{ opacity: 0.7 }}>{t('skills.noSkills')}</div> : null}
           </div>
         </div>
 
         <div style={panelStyle}>
-          <h3 style={{ marginTop: 0 }}>Skill Detail</h3>
+          <h3 style={{ marginTop: 0 }}>{t('skills.detail')}</h3>
           {selectedSkill ? (
             <>
               <div style={{ fontWeight: 700 }}>{selectedSkill.skill?.name ?? selectedSkillName}</div>
@@ -211,20 +213,20 @@ export function SkillsPage() {
                 {selectedSkill.skill?.description ?? ''}
               </div>
               <div style={{ fontSize: 12, opacity: 0.65, marginTop: 8 }}>
-                Path: {selectedSkill.skill?.path ?? selectedSkill.path ?? '(unknown)'}
+                {t('skills.path')}: {selectedSkill.skill?.path ?? selectedSkill.path ?? '(unknown)'}
               </div>
               {selectedSkill.error ? <div style={{ color: '#ffb4b4', marginTop: 8 }}>{selectedSkill.error}</div> : null}
               {selectedSkill.skill?.files?.length ? (
                 <div style={{ fontSize: 12, opacity: 0.65, marginTop: 4 }}>
-                  Files: {selectedSkill.skill.files.join(', ')}
+                  {t('skills.files')}: {selectedSkill.skill.files.join(', ')}
                 </div>
               ) : null}
               <pre style={{ marginTop: 12, whiteSpace: 'pre-wrap', maxHeight: 480, overflow: 'auto' }}>
-                {selectedSkill.skill?.content ?? selectedSkill.content ?? 'No content returned.'}
+                {selectedSkill.skill?.content ?? selectedSkill.content ?? t('skills.noContent')}
               </pre>
             </>
           ) : (
-            <div style={{ opacity: 0.7 }}>Pick a skill to view its details.</div>
+            <div style={{ opacity: 0.7 }}>{t('skills.pickSkill')}</div>
           )}
         </div>
       </div>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useI18n } from '../i18n'
 
 type LogLine = { ts: string; stream: 'stdout' | 'stderr'; line: string }
 
 export function LogsPage() {
+  const { t } = useI18n()
   const [lines, setLines] = useState<LogLine[]>([])
   const [paused, setPaused] = useState(false)
 
@@ -26,16 +28,16 @@ export function LogsPage() {
 
   return (
     <div style={{ maxWidth: 1100 }}>
-      <h2>Logs</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>Live Hermes gateway stdout/stderr.</p>
+      <h2>{t('logs.title')}</h2>
+      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('logs.description')}</p>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
-        <button onClick={() => setLines([])}>Clear</button>
-        <button onClick={() => setPaused((p) => !p)}>{paused ? 'Resume' : 'Pause'}</button>
+        <button onClick={() => setLines([])}>{t('logs.clear')}</button>
+        <button onClick={() => setPaused((p) => !p)}>{paused ? t('logs.resume') : t('logs.pause')}</button>
       </div>
 
       <pre style={{ marginTop: 12, background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12, whiteSpace: 'pre-wrap' }}>
-        {text || '(no logs yet)'}
+        {text || t('logs.empty')}
       </pre>
     </div>
   )
