@@ -22,23 +22,43 @@ export function LogsPage() {
 
   const text = useMemo(() => {
     return lines
-      .map((l) => `[${l.ts}] ${l.stream === 'stdout' ? t('logs.stdout') : t('logs.stderr')} ${l.line}`)
+      .map((line) => `[${line.ts}] ${line.stream === 'stdout' ? t('logs.stdout') : t('logs.stderr')} ${line.line}`)
       .join('\n')
   }, [lines, t])
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <h2>{t('logs.title')}</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('logs.description')}</p>
-
-      <div style={{ display: 'flex', gap: 12, marginTop: 12, alignItems: 'center' }}>
-        <button onClick={() => setLines([])}>{t('logs.clear')}</button>
-        <button onClick={() => setPaused((p) => !p)}>{paused ? t('logs.resume') : t('logs.pause')}</button>
+    <div className="page-shell">
+      <div className="page-header">
+        <h2 className="page-title">{t('logs.title')}</h2>
+        <p className="page-description">{t('logs.description')}</p>
       </div>
 
-      <pre style={{ marginTop: 12, background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12, whiteSpace: 'pre-wrap' }}>
-        {text || t('logs.empty')}
-      </pre>
+      <section className="ui-card">
+        <div className="ui-card-body">
+          <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div className="ui-pill">{lines.length} lines</div>
+            <div className="ui-toolbar">
+              <button onClick={() => setLines([])}>{t('logs.clear')}</button>
+              <button onClick={() => setPaused((current) => !current)}>{paused ? t('logs.resume') : t('logs.pause')}</button>
+            </div>
+          </div>
+
+          <pre
+            className="ui-surface"
+            style={{
+              margin: 0,
+              minHeight: 420,
+              maxHeight: 'calc(100vh - 280px)',
+              overflow: 'auto',
+              whiteSpace: 'pre-wrap',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.6,
+            }}
+          >
+            {text || t('logs.empty')}
+          </pre>
+        </div>
+      </section>
     </div>
   )
 }

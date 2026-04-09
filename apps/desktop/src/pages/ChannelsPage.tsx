@@ -46,45 +46,63 @@ export function ChannelsPage() {
   }, [])
 
   return (
-    <div style={{ maxWidth: 1000 }}>
-      <h2>{t('channels.title')}</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('channels.description')}</p>
-
-      {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
-      {saved ? <div style={{ color: '#b7ffcc' }}>{saved}</div> : null}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-        {channelCatalog.map((channel) => (
-          <section key={channel.id} style={{ background: 'rgba(255,255,255,0.04)', padding: 12, borderRadius: 12 }}>
-            <h3 style={{ marginTop: 0 }}>{t(channel.titleKey)}</h3>
-            <p style={{ opacity: 0.75, marginTop: 4 }}>{t(channel.descriptionKey)}</p>
-            {channel.fields.map((field) => (
-              <label key={field.key} style={{ display: 'block', marginBottom: 10 }}>
-                <div style={{ fontSize: 12, opacity: 0.95 }}>{t(field.labelKey)}</div>
-                <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 4 }}>
-                  {t('channels.envKey')}: {field.key}
-                </div>
-                <input
-                  value={draft[field.key] ?? ''}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  style={{ width: '100%' }}
-                  placeholder={field.placeholder}
-                />
-              </label>
-            ))}
-          </section>
-        ))}
+    <div className="page-shell">
+      <div className="page-header">
+        <h2 className="page-title">{t('channels.title')}</h2>
+        <p className="page-description">{t('channels.description')}</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+      {error ? <div className="ui-status-error">{error}</div> : null}
+      {saved ? <div className="ui-status-success" style={{ marginTop: error ? 12 : 0 }}>{saved}</div> : null}
+
+      <div className="ui-toolbar" style={{ marginTop: 18, marginBottom: 18 }}>
         <button onClick={save}>{t('channels.saveRestart')}</button>
         <button onClick={load}>{t('channels.reload')}</button>
       </div>
 
-      <details style={{ marginTop: 16 }}>
-        <summary style={{ cursor: 'pointer', opacity: 0.85 }}>{t('channels.snapshot')}</summary>
-        <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(env, null, 2)}</pre>
-      </details>
+      <div className="ui-grid ui-grid-two">
+        {channelCatalog.map((channel) => (
+          <section key={channel.id} className="ui-card">
+            <div className="ui-card-body">
+              <h3 className="ui-card-title">{t(channel.titleKey)}</h3>
+              <p className="ui-card-description">{t(channel.descriptionKey)}</p>
+              <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
+                {channel.fields.map((field) => (
+                  <label key={field.key} className="ui-label" style={{ marginBottom: 0 }}>
+                    <div className="ui-label-text">{t(field.labelKey)}</div>
+                    <div className="ui-meta" style={{ marginBottom: 6 }}>
+                      {t('channels.envKey')}: <span className="ui-code">{field.key}</span>
+                    </div>
+                    <input
+                      value={draft[field.key] ?? ''}
+                      onChange={(e) => setDraft((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.placeholder}
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <section className="ui-card" style={{ marginTop: 18 }}>
+        <div className="ui-card-body">
+          <h3 className="ui-card-title">{t('channels.snapshot')}</h3>
+          <pre
+            className="ui-surface"
+            style={{
+              marginTop: 16,
+              whiteSpace: 'pre-wrap',
+              overflow: 'auto',
+              maxHeight: 320,
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {JSON.stringify(env, null, 2)}
+          </pre>
+        </div>
+      </section>
     </div>
   )
 }

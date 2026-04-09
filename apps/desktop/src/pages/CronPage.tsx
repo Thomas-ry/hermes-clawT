@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useI18n } from '../i18n'
 
 type CronJob = {
@@ -34,12 +34,6 @@ type CronOutputListResult = {
 type CronOutputReadResult = {
   success?: boolean
   file?: CronOutputSummary & { content?: string }
-}
-
-const panelStyle: CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  padding: 12,
-  borderRadius: 12,
 }
 
 export function CronPage() {
@@ -103,6 +97,7 @@ export function CronPage() {
         preferredJobId && nextJobs.some((job) => job.job_id === preferredJobId)
           ? preferredJobId
           : nextJobs[0]?.job_id ?? null
+
       setSelectedJobId(nextSelectedId)
 
       const nextSelected = nextJobs.find((job) => job.job_id === nextSelectedId)
@@ -181,169 +176,180 @@ export function CronPage() {
   }, [refresh])
 
   return (
-    <div style={{ maxWidth: 1120 }}>
-      <h2>{t('cron.title')}</h2>
-      <p style={{ opacity: 0.8, marginTop: 4 }}>{t('cron.description')}</p>
-
-      {error ? <pre style={{ color: '#ffb4b4', whiteSpace: 'pre-wrap' }}>{error}</pre> : null}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 16, marginTop: 16 }}>
-        <div style={panelStyle}>
-          <h3 style={{ marginTop: 0 }}>{t('cron.createJob')}</h3>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.name')}</div>
-            <input value={name} onChange={(e) => setName(e.target.value)} style={{ width: '100%' }} />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.schedule')}</div>
-            <input value={schedule} onChange={(e) => setSchedule(e.target.value)} style={{ width: '100%' }} />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.deliver')}</div>
-            <input value={deliver} onChange={(e) => setDeliver(e.target.value)} style={{ width: '100%' }} />
-          </label>
-          <label style={{ display: 'block', marginBottom: 8 }}>
-            <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.prompt')}</div>
-            <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ width: '100%', minHeight: 120 }} />
-          </label>
-          <button onClick={createJob} disabled={busyAction === 'create'}>
-            {busyAction === 'create' ? t('cron.creating') : t('cron.create')}
-          </button>
-        </div>
-
-        <div style={panelStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ marginTop: 0 }}>{t('cron.jobs')}</h3>
-            <button onClick={() => refresh(selectedJobId)}>{t('cron.refresh')}</button>
-          </div>
-          <div style={{ display: 'grid', gap: 10 }}>
-            {jobs.map((job) => (
-              <button
-                key={job.job_id}
-                onClick={() => {
-                  setSelectedJobId(job.job_id)
-                  setEditName(job.name ?? '')
-                  setEditSchedule(job.schedule ?? '')
-                  setEditPrompt(job.prompt_preview ?? '')
-                  setEditDeliver(Array.isArray(job.deliver) ? job.deliver.join(',') : String(job.deliver ?? 'local'))
-                }}
-                style={{
-                  textAlign: 'left',
-                  border: job.job_id === selectedJobId ? '1px solid rgba(231, 149, 78, 0.8)' : '1px solid rgba(255,255,255,0.08)',
-                  background: 'rgba(255,255,255,0.03)',
-                }}
-              >
-                <div style={{ fontWeight: 600 }}>{job.name}</div>
-                <div style={{ fontSize: 12, opacity: 0.72 }}>{job.schedule}</div>
-                <div style={{ fontSize: 12, opacity: 0.72 }}>
-                  {job.state ?? t('cron.scheduled')} {job.next_run_at ? `· ${t('cron.next')} ${job.next_run_at}` : ''}
-                </div>
-              </button>
-            ))}
-            {jobs.length === 0 ? <div style={{ opacity: 0.7 }}>{t('cron.noJobs')}</div> : null}
-          </div>
-        </div>
+    <div className="page-shell">
+      <div className="page-header">
+        <h2 className="page-title">{t('cron.title')}</h2>
+        <p className="page-description">{t('cron.description')}</p>
       </div>
 
-      <div style={{ ...panelStyle, marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>{t('cron.selectedJob')}</h3>
-        {selectedJob ? (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.name')}</div>
-                  <input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%' }} />
-                </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.schedule')}</div>
-                  <input value={editSchedule} onChange={(e) => setEditSchedule(e.target.value)} style={{ width: '100%' }} />
-                </label>
-                <label style={{ display: 'block', marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{t('cron.deliver')}</div>
-                  <input value={editDeliver} onChange={(e) => setEditDeliver(e.target.value)} style={{ width: '100%' }} />
-                </label>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>{t('cron.promptPreview')}</div>
-                <textarea value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} style={{ width: '100%', minHeight: 130 }} />
-                <div style={{ fontSize: 12, opacity: 0.65, marginTop: 6 }}>
-                  {t('cron.skills')}: {selectedJob.skills?.length ? selectedJob.skills.join(', ') : t('cron.none')}
-                </div>
-                <div style={{ fontSize: 12, opacity: 0.65 }}>
-                  {t('cron.script')}: {selectedJob.script ?? t('cron.none')}
-                </div>
-                <div style={{ fontSize: 12, opacity: 0.65 }}>
-                  {t('cron.repeat')}: {selectedJob.repeat ?? t('cron.defaultValue')}
-                </div>
-                {selectedJob.paused_reason ? (
-                  <div style={{ fontSize: 12, opacity: 0.65 }}>{t('cron.pausedReason')}: {selectedJob.paused_reason}</div>
-                ) : null}
+      {error ? <div className="ui-status-error">{error}</div> : null}
+
+      <div className="ui-grid ui-grid-two" style={{ marginTop: 18 }}>
+        <section className="ui-card">
+          <div className="ui-card-body">
+            <h3 className="ui-card-title">{t('cron.createJob')}</h3>
+            <p className="ui-card-description">{t('cron.description')}</p>
+            <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
+              <label className="ui-label" style={{ marginBottom: 0 }}>
+                <div className="ui-label-text">{t('cron.name')}</div>
+                <input value={name} onChange={(e) => setName(e.target.value)} />
+              </label>
+              <label className="ui-label" style={{ marginBottom: 0 }}>
+                <div className="ui-label-text">{t('cron.schedule')}</div>
+                <input value={schedule} onChange={(e) => setSchedule(e.target.value)} />
+              </label>
+              <label className="ui-label" style={{ marginBottom: 0 }}>
+                <div className="ui-label-text">{t('cron.deliver')}</div>
+                <input value={deliver} onChange={(e) => setDeliver(e.target.value)} />
+              </label>
+              <label className="ui-label" style={{ marginBottom: 0 }}>
+                <div className="ui-label-text">{t('cron.prompt')}</div>
+                <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} style={{ minHeight: 150 }} />
+              </label>
+              <div className="ui-toolbar">
+                <button onClick={createJob} disabled={busyAction === 'create'}>
+                  {busyAction === 'create' ? t('cron.creating') : t('cron.create')}
+                </button>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
-              <button onClick={saveJobEdits} disabled={busyAction === `update:${selectedJob.job_id}`}>
-                {busyAction === `update:${selectedJob.job_id}` ? t('cron.saving') : t('cron.saveChanges')}
-              </button>
-              <button onClick={() => runJobAction('run', selectedJob.job_id)} disabled={busyAction === `run:${selectedJob.job_id}`}>
-                {t('cron.runNow')}
-              </button>
-              {selectedJob.state === 'paused' ? (
-                <button onClick={() => runJobAction('resume', selectedJob.job_id)} disabled={busyAction === `resume:${selectedJob.job_id}`}>
-                  {t('cron.resume')}
-                </button>
-              ) : (
-                <button onClick={() => runJobAction('pause', selectedJob.job_id)} disabled={busyAction === `pause:${selectedJob.job_id}`}>
-                  {t('cron.pause')}
-                </button>
-              )}
-              <button onClick={() => runJobAction('remove', selectedJob.job_id)} disabled={busyAction === `remove:${selectedJob.job_id}`}>
-                {t('cron.delete')}
-              </button>
-              <button onClick={() => loadOutputs(selectedJob.job_id, selectedOutputPath)} disabled={busyAction !== null}>
-                {t('cron.refreshOutputs')}
-              </button>
+        <section className="ui-card">
+          <div className="ui-card-body">
+            <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <div>
+                <h3 className="ui-card-title">{t('cron.jobs')}</h3>
+                <p className="ui-card-description">{jobs.length} jobs</p>
+              </div>
+              <button onClick={() => refresh(selectedJobId)}>{t('cron.refresh')}</button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '0.85fr 1.15fr', gap: 16, marginTop: 16 }}>
-              <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>{t('cron.savedOutputs')}</div>
-                <div style={{ display: 'grid', gap: 8 }}>
-                  {outputs.map((file) => (
-                    <button
-                      key={file.path}
-                      onClick={() => {
-                        setSelectedOutputPath(file.path)
-                        window.hermes.cron.outputs
-                          .read({ job_id: selectedJob.job_id, path: file.path })
-                          .then((result) => setSelectedOutputContent(((result as CronOutputReadResult).file?.content ?? '')))
-                          .catch((e) => setError(String(e)))
-                      }}
-                      style={{
-                        textAlign: 'left',
-                        border: file.path === selectedOutputPath ? '1px solid rgba(231, 149, 78, 0.8)' : '1px solid rgba(255,255,255,0.08)',
-                        background: 'rgba(255,255,255,0.03)',
-                      }}
-                    >
-                      {file.fileName}
+            <div style={{ display: 'grid', gap: 12 }}>
+              {jobs.map((job) => (
+                <button
+                  key={job.job_id}
+                  onClick={() => {
+                    setSelectedJobId(job.job_id)
+                    setEditName(job.name ?? '')
+                    setEditSchedule(job.schedule ?? '')
+                    setEditPrompt(job.prompt_preview ?? '')
+                    setEditDeliver(Array.isArray(job.deliver) ? job.deliver.join(',') : String(job.deliver ?? 'local'))
+                    loadOutputs(job.job_id)
+                  }}
+                  className={`ui-list-button ${job.job_id === selectedJobId ? 'is-active' : ''}`}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                    <div style={{ fontWeight: 700 }}>{job.name}</div>
+                    <span className="ui-pill">{job.state ?? t('cron.scheduled')}</span>
+                  </div>
+                  <div className="ui-meta" style={{ marginTop: 6 }}>{job.schedule}</div>
+                  <div className="ui-meta" style={{ marginTop: 6 }}>
+                    {job.next_run_at ? `${t('cron.next')} ${job.next_run_at}` : t('cron.defaultValue')}
+                  </div>
+                </button>
+              ))}
+              {jobs.length === 0 ? <div className="ui-meta">{t('cron.noJobs')}</div> : null}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section className="ui-card" style={{ marginTop: 18 }}>
+        <div className="ui-card-body">
+          <h3 className="ui-card-title">{t('cron.selectedJob')}</h3>
+          {selectedJob ? (
+            <div className="ui-grid ui-grid-two" style={{ marginTop: 18 }}>
+              <div style={{ display: 'grid', gap: 12 }}>
+                <label className="ui-label" style={{ marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.name')}</div>
+                  <input value={editName} onChange={(e) => setEditName(e.target.value)} />
+                </label>
+                <label className="ui-label" style={{ marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.schedule')}</div>
+                  <input value={editSchedule} onChange={(e) => setEditSchedule(e.target.value)} />
+                </label>
+                <label className="ui-label" style={{ marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.deliver')}</div>
+                  <input value={editDeliver} onChange={(e) => setEditDeliver(e.target.value)} />
+                </label>
+                <label className="ui-label" style={{ marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.promptPreview')}</div>
+                  <textarea value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} style={{ minHeight: 180 }} />
+                </label>
+              </div>
+
+              <div style={{ display: 'grid', gap: 14 }}>
+                <div className="ui-surface">
+                  <div className="ui-meta">{t('cron.skills')}: {selectedJob.skills?.length ? selectedJob.skills.join(', ') : t('cron.none')}</div>
+                  <div className="ui-meta" style={{ marginTop: 8 }}>{t('cron.script')}: {selectedJob.script ?? t('cron.none')}</div>
+                  <div className="ui-meta" style={{ marginTop: 8 }}>{t('cron.repeat')}: {selectedJob.repeat ?? t('cron.defaultValue')}</div>
+                  {selectedJob.paused_reason ? (
+                    <div className="ui-meta" style={{ marginTop: 8 }}>{t('cron.pausedReason')}: {selectedJob.paused_reason}</div>
+                  ) : null}
+                </div>
+
+                <div className="ui-toolbar">
+                  <button onClick={saveJobEdits} disabled={busyAction === `update:${selectedJob.job_id}`}>
+                    {busyAction === `update:${selectedJob.job_id}` ? t('cron.saving') : t('cron.saveChanges')}
+                  </button>
+                  <button onClick={() => runJobAction('run', selectedJob.job_id)} disabled={busyAction === `run:${selectedJob.job_id}`}>
+                    {t('cron.runNow')}
+                  </button>
+                  {selectedJob.state === 'paused' ? (
+                    <button onClick={() => runJobAction('resume', selectedJob.job_id)} disabled={busyAction === `resume:${selectedJob.job_id}`}>
+                      {t('cron.resume')}
                     </button>
-                  ))}
-                  {outputs.length === 0 ? <div style={{ opacity: 0.7 }}>{t('cron.noOutputs')}</div> : null}
+                  ) : (
+                    <button onClick={() => runJobAction('pause', selectedJob.job_id)} disabled={busyAction === `pause:${selectedJob.job_id}`}>
+                      {t('cron.pause')}
+                    </button>
+                  )}
+                  <button onClick={() => runJobAction('remove', selectedJob.job_id)} disabled={busyAction === `remove:${selectedJob.job_id}`}>
+                    {t('cron.delete')}
+                  </button>
+                  <button onClick={() => loadOutputs(selectedJob.job_id, selectedOutputPath)} disabled={busyAction !== null}>
+                    {t('cron.refreshOutputs')}
+                  </button>
+                </div>
+
+                <div className="ui-grid ui-grid-two">
+                  <div className="ui-card-soft" style={{ padding: 16 }}>
+                    <div className="ui-card-title" style={{ fontSize: '0.95rem' }}>{t('cron.savedOutputs')}</div>
+                    <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+                      {outputs.map((file) => (
+                        <button
+                          key={file.path}
+                          onClick={() => {
+                            setSelectedOutputPath(file.path)
+                            window.hermes.cron.outputs
+                              .read({ job_id: selectedJob.job_id, path: file.path })
+                              .then((result) => setSelectedOutputContent(((result as CronOutputReadResult).file?.content ?? '')))
+                              .catch((e) => setError(String(e)))
+                          }}
+                          className={`ui-list-button ${file.path === selectedOutputPath ? 'is-active' : ''}`}
+                        >
+                          {file.fileName}
+                        </button>
+                      ))}
+                      {outputs.length === 0 ? <div className="ui-meta">{t('cron.noOutputs')}</div> : null}
+                    </div>
+                  </div>
+
+                  <div className="ui-card-soft" style={{ padding: 16 }}>
+                    <div className="ui-card-title" style={{ fontSize: '0.95rem' }}>{t('cron.outputPreview')}</div>
+                    <pre style={{ margin: '12px 0 0', whiteSpace: 'pre-wrap', maxHeight: 360, overflow: 'auto', color: 'var(--text-secondary)' }}>
+                      {selectedOutputContent || t('cron.outputHint')}
+                    </pre>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 8 }}>{t('cron.outputPreview')}</div>
-                <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 360, overflow: 'auto', margin: 0 }}>
-                  {selectedOutputContent || t('cron.outputHint')}
-                </pre>
-              </div>
             </div>
-          </>
-        ) : (
-          <div style={{ opacity: 0.7 }}>{t('cron.pickJob')}</div>
-        )}
-      </div>
+          ) : (
+            <div className="ui-meta" style={{ marginTop: 18 }}>{t('cron.pickJob')}</div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }
