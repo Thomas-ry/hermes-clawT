@@ -1,340 +1,191 @@
-import { useEffect, useState } from 'react'
-import { hermesStatus } from '../lib/hermesClient'
-import { useI18n } from '../i18n'
-import { StatCard } from '../components/StatCard'
-import { ArrowCircleIcon, ClockIcon, ServerIcon } from '../components/icons'
-import { fetchReleaseFeedSummary, PUBLIC_UPDATE_FEED_URL, type ReleaseFeedSummary } from '../lib/releaseFeed'
-import { useToast } from '../components/Toast'
-
-type UpdaterStatus = {
-  status?: string
-  available?: boolean
-  checking?: boolean
-  downloading?: boolean
-  downloaded?: boolean
-  version?: string | null
-  downloadedVersion?: string | null
-  progressPercent?: number | null
-  error?: string | null
-  lastCheckedAt?: string | null
-}
-
-type GatewayState = 'unknown' | 'running' | 'stopped'
-
-function StatusDot({ running }: { running: boolean }) {
-  return (
-    <span
-      style={{
-        display: 'inline-block',
-        width: 9,
-        height: 9,
-        borderRadius: '50%',
-        background: running ? '#4ade80' : '#ff6b6b',
-        boxShadow: running ? '0 0 8px #4ade80' : '0 0 8px #ff6b6b',
-        marginRight: 6,
-        animation: running ? 'statusPulse 2s ease-in-out infinite' : 'none',
-      }}
-    />
-  )
-}
+import { useTranslation } from 'react-i18next'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useGatewayStore } from '@/stores/gateway'
+import { useSettingsStore } from '@/stores/settings'
+import { toast } from 'sonner'
+import {
+  Play,
+  Square,
+  RotateCw,
+  RefreshCw,
+  Download,
+  Install,
+  Clock,
+  Server,
+} from 'lucide-react'
+import { useEffect } from 'react'
 
 export function DashboardPage() {
-  const { language, t } = useI18n()
-  const { toast } = useToast()
-  const [status, setStatus] = useState<unknown>(null)
-  const [updater, setUpdater] = useState<UpdaterStatus | null>(null)
-  const [err, setErr] = useState<string | null>(null)
-  const [releaseFeed, setReleaseFeed] = useState<ReleaseFeedSummary | null>(null)
-  const [releaseFeedError, setReleaseFeedError] = useState<string | null>(null)
-  const [releaseFeedLoading, setReleaseFeedLoading] = useState(false)
-  const [gatewayState, setGatewayState] = useState<GatewayState>('unknown')
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const { t } = useTranslation('common')
+  const gateway = useGatewayStore()
+  const settings = useSettingsStore()
 
-  async function refresh() {
+  useEffect(() => {
+    gateway.init()
+  }, [gateway])
+
+  const isRunning = gateway.status === 'running'
+  const statusColor = isRunning ? 'text-success' : gateway.status === 'error' ? 'text-destructive' : 'text-muted-foreground'
+  const statusBg = isRunning ? 'bg-success/15' : 'bg-muted'
+
+  async function handleAction(action: 'start' | 'stop' | 'restart' | 'check' | 'download' | 'install') {
+    const actions: Record<string, () => Promise<void>> = {
+      start: () => gateway.start(),
+      stop: () => gateway.stop(),
+      restart: () => gateway.restart(),
+      check: () => window.hermes.updater.check() as unknown as Promise<void>,
+      download: () => window.hermes.updater.download() as unknown as Promise<void>,
+      install: () => window.hermes.updater.install() as unknown as Promise<void>,
+    }
     try {
-      setErr(null)
-      const nextStatus = await hermesStatus()
-      setStatus(nextStatus)
-      const updaterFromStatus = (nextStatus as { updater?: UpdaterStatus }).updater ?? null
-      setUpdater(updaterFromStatus)
-      const gw = (nextStatus as { gateway?: { running?: boolean } }).gateway
-      setGatewayState(gw?.running ? 'running' : 'stopped')
+      await actions[action]()
+      toast.success(`${action} success`)
     } catch (e) {
-      setErr(String(e))
+      toast.error(String(e))
     }
   }
-
-  useEffect(() => {
-    refresh()
-    const interval = setInterval(refresh, 8000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    const unsubscribe = window.hermes.updater.onState((nextState) => {
-      setUpdater(nextState as UpdaterStatus)
-    })
-    return unsubscribe
-  }, [])
-
-  async function doAction(action: string, fn: () => Promise<void>) {
-    setActionLoading(action)
-    try {
-      await fn()
-      await refresh()
-      toast(`${action} success`, 'success')
-    } catch (e) {
-      toast(String(e), 'error')
-    } finally {
-      setActionLoading(null)
-    }
-  }
-
-  function refreshReleaseFeed() {
-    setReleaseFeedLoading(true)
-    setReleaseFeedError(null)
-    fetchReleaseFeedSummary()
-      .then((summary) => setReleaseFeed(summary))
-      .catch((error) => setReleaseFeedError(String(error)))
-      .finally(() => setReleaseFeedLoading(false))
-  }
-
-  useEffect(() => {
-    refreshReleaseFeed()
-  }, [])
-
-  function renderUpdaterStatus(current: UpdaterStatus | null): string {
-    if (!current) return t('dashboard.updaterLoading')
-    switch (current.status) {
-      case 'idle': return t('dashboard.updateIdle')
-      case 'dev-only': return t('dashboard.updateDevOnly')
-      case 'packaged-required': return t('dashboard.updatePackagedRequired')
-      case 'checking': return t('dashboard.updateChecking')
-      case 'available': return `${t('dashboard.updateAvailable')} ${current.version ?? ''}`.trim()
-      case 'not-available': return t('dashboard.updateNotAvailable')
-      case 'downloading': return `${t('dashboard.updateDownloading')} ${current.progressPercent?.toFixed(1) ?? '0.0'}%`
-      case 'downloaded': return `${t('dashboard.updateDownloaded')} ${current.downloadedVersion ?? current.version ?? ''}`.trim()
-      case 'error': return `${t('dashboard.updateError')}${current.error ? `: ${current.error}` : ''}`
-      default: return t('dashboard.updaterLoading')
-    }
-  }
-
-  function renderReleaseCategory(category: string): string {
-    switch (category) {
-      case 'Features': return t('dashboard.releaseCategoryFeatures')
-      case 'Fixes': return t('dashboard.releaseCategoryFixes')
-      case 'Improvements': return t('dashboard.releaseCategoryImprovements')
-      case 'Documentation & QA': return t('dashboard.releaseCategoryDocsQa')
-      case 'Maintenance': return t('dashboard.releaseCategoryMaintenance')
-      default: return t('dashboard.releaseCategoryOther')
-    }
-  }
-
-  function formatPublishedAt(value?: string): string | null {
-    if (!value) return null
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return value
-    return new Intl.DateTimeFormat(language === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
-  }
-
-  const runtime = (status as { runtime?: { hermesHomeDir?: string; gatewayPort?: number } } | null)?.runtime
-  const isRunning = gatewayState === 'running'
 
   return (
-    <div className="page-shell">
-      <style>{`
-        @keyframes statusPulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 8px #4ade80; }
-          50% { opacity: 0.6; box-shadow: 0 0 16px #4ade80; }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-up { animation: fadeUp 0.3s ease forwards; }
-        .stat-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
-        .stat-card { transition: all 0.2s ease; }
-      `}</style>
-
-      <div className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <h2 className="page-title">{t('dashboard.title')}</h2>
-            <p className="page-description">{t('dashboard.description')}</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <StatusDot running={isRunning} />
-            <span className="ui-pill" style={{ fontSize: '0.82rem' }}>
-              {isRunning ? t('dashboard.running') : t('dashboard.stopped')}
-            </span>
-          </div>
-        </div>
+    <div className="p-6 space-y-5 animate-fade-in">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold">{t('dashboard.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('dashboard.description')}</p>
       </div>
 
-      <div className="ui-stat-grid fade-up" style={{ marginBottom: 18 }}>
-        <StatCard
-          icon={<ServerIcon width={18} height={18} />}
-          label={t('dashboard.systemStatus')}
-          value={isRunning ? t('dashboard.running') : t('dashboard.stopped')}
-          hint={`${t('dashboard.gatewayPort')}: ${runtime?.gatewayPort ?? '—'}`}
-        />
-        <StatCard
-          icon={<ArrowCircleIcon width={18} height={18} />}
-          label={t('dashboard.autoUpdateTitle')}
-          value={renderUpdaterStatus(updater)}
-          hint={updater?.version ?? t('dashboard.versionInfo')}
-        />
-        <StatCard
-          icon={<ClockIcon width={18} height={18} />}
-          label={t('dashboard.releaseNotesTitle')}
-          value={releaseFeed?.version ?? '—'}
-          hint={formatPublishedAt(releaseFeed?.publishedAt) ?? t('dashboard.releaseNotesLoading')}
-        />
+      {/* Status Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${statusBg}`}>
+                <Server className={`h-5 w-5 ${statusColor}`} />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('dashboard.systemStatus')}</p>
+                <p className={`text-sm font-semibold ${statusColor}`}>
+                  {isRunning ? t('dashboard.gatewayRunning') : t('dashboard.gatewayStopped')}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                <span className="text-sm font-bold text-primary">{settings.language.toUpperCase()}</span>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('settings.language')}</p>
+                <p className="text-sm font-semibold">{settings.language === 'en' ? 'English' : '中文'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">{t('dashboard.lastChecked')}</p>
+                <p className="text-sm font-semibold">{gateway.lastChecked ?? '—'}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="ui-card fade-up" style={{ marginBottom: 18 }}>
-        <div className="ui-card-body">
-          <h3 className="ui-card-title" style={{ marginBottom: 14 }}>{t('dashboard.quickActions')}</h3>
-          <div className="ui-toolbar" style={{ gap: 10, flexWrap: 'wrap' }}>
-            <button
-              onClick={() => doAction('start', () => window.hermes.gateway.start())}
-              disabled={actionLoading !== null}
-              style={{ minWidth: 88 }}
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('dashboard.quickActions')}</CardTitle>
+          <CardDescription>Control Hermes Gateway directly</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={isRunning ? 'outline' : 'default'}
+              onClick={() => handleAction('start')}
+              disabled={isRunning}
             >
-              {actionLoading === 'start' ? '…' : t('dashboard.start')}
-            </button>
-            <button
-              onClick={() => doAction('stop', () => window.hermes.gateway.stop())}
-              disabled={actionLoading !== null}
-              style={{ minWidth: 88 }}
+              <Play className="h-3.5 w-3.5 mr-1" />
+              {t('dashboard.start')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAction('stop')}
+              disabled={!isRunning}
             >
-              {actionLoading === 'stop' ? '…' : t('dashboard.stop')}
-            </button>
-            <button
-              onClick={() => doAction('restart', () => window.hermes.gateway.restart())}
-              disabled={actionLoading !== null}
-              style={{ minWidth: 88 }}
-            >
-              {actionLoading === 'restart' ? '…' : t('dashboard.restart')}
-            </button>
-            <button onClick={refresh} disabled={actionLoading !== null}>
-              {t('dashboard.refresh')}
-            </button>
-            <button
-              onClick={() => doAction('check', () => window.hermes.updater.check())}
-              disabled={actionLoading !== null}
-            >
+              <Square className="h-3.5 w-3.5 mr-1" />
+              {t('dashboard.stop')}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleAction('restart')}>
+              <RotateCw className="h-3.5 w-3.5 mr-1" />
+              {t('dashboard.restart')}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => gateway.init()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" />
+              {t('common.refresh')}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleAction('check')}>
+              <Download className="h-3.5 w-3.5 mr-1" />
               {t('dashboard.checkUpdates')}
-            </button>
-            <button
-              onClick={() => doAction('download', () => window.hermes.updater.download())}
-              disabled={!updater?.available || actionLoading !== null}
-            >
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleAction('download')}>
+              <Download className="h-3.5 w-3.5 mr-1" />
               {t('dashboard.downloadUpdate')}
-            </button>
-            <button
-              onClick={() => doAction('install', () => window.hermes.updater.install())}
-              disabled={!updater?.downloaded || actionLoading !== null}
-            >
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleAction('install')}>
+              <Install className="h-3.5 w-3.5 mr-1" />
               {t('dashboard.restartInstall')}
-            </button>
+            </Button>
           </div>
-        </div>
-      </div>
 
-      <div className="ui-grid ui-grid-two fade-up" style={{ animationDelay: '0.1s' }}>
-        <section className="ui-card">
-          <div className="ui-card-body">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          {gateway.error && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              {gateway.error}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Gateway Info */}
+      {gateway.status !== 'unknown' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('dashboard.systemStatus')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <h3 className="ui-card-title">{t('dashboard.autoUpdateTitle')}</h3>
-                <p className="ui-card-description">{t('dashboard.autoUpdateDescription')}</p>
+                <p className="text-muted-foreground">{t('dashboard.port')}</p>
+                <p className="font-mono font-semibold">{gateway.port ?? '—'}</p>
               </div>
-              <span className="ui-pill">{renderUpdaterStatus(updater)}</span>
-            </div>
-            <div className="ui-surface" style={{ display: 'grid', gap: 12 }}>
-              <div className="ui-meta">{t('dashboard.updateSource')}</div>
-              <div className="ui-code" style={{ width: 'fit-content', maxWidth: '100%', wordBreak: 'break-all' }}>{PUBLIC_UPDATE_FEED_URL}</div>
-              {updater?.lastCheckedAt ? <div className="ui-meta">{t('dashboard.lastChecked')}: {updater.lastCheckedAt}</div> : null}
-              {(updater?.version || updater?.downloadedVersion) ? (
-                <div className="ui-meta">{t('dashboard.versionInfo')}: {updater.downloadedVersion ?? updater.version}</div>
-              ) : null}
-              {updater?.error ? <div className="ui-status-error">{updater.error}</div> : null}
-            </div>
-          </div>
-        </section>
-
-        <section className="ui-card">
-          <div className="ui-card-body">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
               <div>
-                <h3 className="ui-card-title">{t('dashboard.releaseNotesTitle')}</h3>
-                <p className="ui-card-description">{t('dashboard.releaseNotesDescription')}</p>
+                <p className="text-muted-foreground">{t('dashboard.version')}</p>
+                <p className="font-mono font-semibold">{gateway.version ?? '—'}</p>
               </div>
-              <button onClick={refreshReleaseFeed} disabled={releaseFeedLoading} style={{ fontSize: '0.82rem', padding: '0.5rem 0.9rem' }}>
-                {releaseFeedLoading ? '…' : t('dashboard.releaseNotesRefresh')}
-              </button>
+              <div>
+                <p className="text-muted-foreground">Status</p>
+                <Badge variant={isRunning ? 'success' : 'destructive'}>{gateway.status}</Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground">{t('dashboard.lastChecked')}</p>
+                <p className="font-mono">{gateway.lastChecked ?? '—'}</p>
+              </div>
             </div>
-            <div className="ui-surface" style={{ display: 'grid', gap: 12 }}>
-              <div className="ui-meta">{t('dashboard.updateSource')}</div>
-              <div className="ui-code" style={{ width: 'fit-content', maxWidth: '100%', wordBreak: 'break-all' }}>{PUBLIC_UPDATE_FEED_URL}</div>
-              {releaseFeed ? (
-                <>
-                  <div className="ui-pill">{t('dashboard.releaseVersion')}: {releaseFeed.version}</div>
-                  {releaseFeed.previousTag ? <div className="ui-meta">{t('dashboard.previousVersion')}: {releaseFeed.previousTag}</div> : null}
-                  {formatPublishedAt(releaseFeed.publishedAt) ? (
-                    <div className="ui-meta">{t('dashboard.publishedAt')}: {formatPublishedAt(releaseFeed.publishedAt)}</div>
-                  ) : null}
-                  {releaseFeed.compareUrl ? (
-                    <a href={releaseFeed.compareUrl} target="_blank" rel="noreferrer">{t('dashboard.compareLink')}</a>
-                  ) : null}
-                  <div style={{ display: 'grid', gap: 10, maxHeight: 220, overflow: 'auto' }}>
-                    {releaseFeed.sections.map((section) => (
-                      <div key={section.category} className="ui-card-soft" style={{ padding: 12 }}>
-                        <div className="ui-card-title" style={{ fontSize: '0.88rem', marginBottom: 8 }}>{renderReleaseCategory(section.category)}</div>
-                        <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                          {section.items.map((item) => (
-                            <li key={`${section.category}-${item.hash}`} style={{ marginBottom: 4 }}>{item.summary}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                  <a href={`${PUBLIC_UPDATE_FEED_URL}/release-notes.md`} target="_blank" rel="noreferrer">{t('dashboard.openReleaseNotes')}</a>
-                </>
-              ) : releaseFeedError ? (
-                <div className="ui-status-error">{t('dashboard.releaseNotesError')}: {releaseFeedError}</div>
-              ) : (
-                <div className="ui-meta">{t('dashboard.releaseNotesLoading')}</div>
-              )}
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {err ? <div className="ui-status-error fade-up" style={{ marginTop: 18 }}>{err}</div> : null}
-
-      <section className="ui-card fade-up" style={{ marginTop: 18, animationDelay: '0.2s' }}>
-        <div className="ui-card-body">
-          <h3 className="ui-card-title">{t('dashboard.gatewaySnapshot')}</h3>
-          <p className="ui-card-description">{runtime?.gatewayPort ? `${t('dashboard.gatewayPort')}: ${runtime.gatewayPort}` : t('dashboard.snapshotLoading')}</p>
-          <pre
-            className="ui-surface"
-            style={{
-              marginTop: 16,
-              whiteSpace: 'pre-wrap',
-              overflow: 'auto',
-              maxHeight: 280,
-              color: 'var(--text-secondary)',
-              fontSize: '0.85rem',
-              borderRadius: 12,
-              padding: 14,
-            }}
-          >
-            {status ? JSON.stringify(status, null, 2) : t('dashboard.snapshotLoading')}
-          </pre>
-        </div>
-      </section>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

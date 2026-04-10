@@ -1,31 +1,29 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
-import { hermesApiChat } from '../lib/hermesClient'
-import { useI18n } from '../i18n'
-import { getChatRoleLabel, type ChatRole } from '../lib/chatRole'
-import { useToast } from '../components/Toast'
+import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useChatStore } from '@/stores/chat'
+import { useGatewayStore } from '@/stores/gateway'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/input'
+import { toast } from 'sonner'
+import { Send, Trash2, Clock, Copy, RotateCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-type ChatMsg = { role: ChatRole; content: string; timestamp: Date }
-
-function TypingIndicator() {
+function TypingDots() {
   return (
-    <div style={{ display: 'flex', gap: 4, padding: '4px 0' }}>
+    <span className="inline-flex items-center gap-0.5">
       {[0, 1, 2].map((i) => (
-        <div
+        <span
           key={i}
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: '50%',
-            background: 'var(--text-muted)',
-            animation: `typingBounce 1.2s ease-in-out ${i * 0.15}s infinite`,
-          }}
+          className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-typing-dot"
+          style={{ animationDelay: `${i * 0.15}s` }}
         />
       ))}
-    </div>
+    </span>
   )
 }
 
-function formatTime(date: Date): string {
+function formatTime(date: Date) {
   return new Intl.DateTimeFormat('en-US', {
     hour: '2-digit',
     minute: '2-digit',
@@ -35,204 +33,132 @@ function formatTime(date: Date): string {
 }
 
 export function ChatPage() {
-  const { t } = useI18n()
-  const { toast } = useToast()
-  const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: 'system', content: 'You are Hermes Agent.', timestamp: new Date() },
-  ])
-  const [draft, setDraft] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showTimestamps, setShowTimestamps] = useState(false)
+  const { t } = useTranslation()
+  const chat = useChatStore()
+  const gateway = useGatewayStore()
   const bottomRef = useRef<HTMLDivElement>(null)
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
-
-  const visibleMessages = useMemo(() => messages.filter((m) => m.role !== 'system'), [messages])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, busy])
+  }, [chat.messages, chat.busy])
 
-  async function send() {
-    const text = draft.trim()
-    if (!text || busy) return
-    setDraft('')
-    setError(null)
-    const now = new Date()
-    const nextMessages = [...messages, { role: 'user' as const, content: text, timestamp: now }]
-    setMessages(nextMessages)
-    setBusy(true)
+  const isRunning = gateway.status === 'running'
+
+  async function handleSend() {
+    const text = chat.draft.trim()
+    if (!text || chat.busy) return
+    chat.setDraft('')
+    chat.setError(null)
     try {
-      const reply = await hermesApiChat({ messages: nextMessages })
-      setMessages([...nextMessages, { role: 'assistant', content: reply, timestamp: new Date() }])
+      await chat.sendMessage(text)
     } catch (e) {
-      setError(String(e))
-      toast(String(e), 'error')
-    } finally {
-      setBusy(false)
+      toast.error(String(e))
     }
   }
 
-  function copyMessage(content: string, idx: number) {
-    navigator.clipboard.writeText(content).then(() => {
-      setCopiedIdx(idx)
-      toast(t('chat.copied'), 'success')
-      setTimeout(() => setCopiedIdx(null), 1800)
-    })
-  }
-
-  function clearChat() {
-    setMessages([{ role: 'system', content: 'You are Hermes Agent.', timestamp: new Date() }])
-    toast(t('chat.chatCleared'), 'info')
+  function copyMessage(content: string) {
+    navigator.clipboard.writeText(content).then(() => toast.success(t('common:common.copied')))
   }
 
   return (
-    <div className="page-shell">
-      <style>{`
-        @keyframes typingBounce {
-          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-          30% { transform: translateY(-6px); opacity: 1; }
-        }
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .chat-msg-enter { animation: fadeSlideIn 0.22s ease forwards; }
-      `}</style>
-
-      <div className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <h2 className="page-title">{t('chat.title')}</h2>
-            <p className="page-description">{t('chat.description')}</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button
-              onClick={() => setShowTimestamps(!showTimestamps)}
-              style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem', opacity: showTimestamps ? 1 : 0.65 }}
-              title={t('chat.timestamp')}
-            >
-              🕐
-            </button>
-            <button onClick={clearChat} style={{ fontSize: '0.8rem', padding: '0.5rem 0.9rem' }}>
-              {t('chat.clearChat')}
-            </button>
-          </div>
+    <div className="flex flex-col h-full animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <div>
+          <h1 className="text-xl font-bold">{t('common:common.nav.chat')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('common:chat.description')}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={isRunning ? 'success' : 'destructive'}>
+            {isRunning ? '● ' : ''}{isRunning ? t('common:dashboard.gatewayRunning') : t('common:dashboard.gatewayStopped')}
+          </Badge>
+          <Button size="icon" variant="ghost" onClick={() => chat.setShowTimestamps(!chat.showTimestamps)} title={t('common:chat.showTimestamps')}>
+            <Clock className={cn('h-4 w-4', chat.showTimestamps && 'text-primary')} />
+          </Button>
+          <Button size="icon" variant="ghost" onClick={() => { chat.clearMessages(); toast.info(t('common:chat.chatCleared')) }} title={t('common:chat.clearChat')}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="ui-card">
-        <div className="ui-card-body" style={{ display: 'grid', gap: 16 }}>
-          <div
-            className="ui-surface"
-            style={{
-              minHeight: 420,
-              maxHeight: 'calc(100vh - 330px)',
-              overflow: 'auto',
-              display: 'grid',
-              gap: 14,
-              alignContent: 'start',
-              padding: 18,
-            }}
-          >
-            {visibleMessages.map((message, index) => (
-              <div
-                key={`${message.role}-${index}`}
-                className="chat-msg-enter"
-                style={{
-                  display: 'grid',
-                  gap: 6,
-                  justifyItems: message.role === 'user' ? 'end' : 'start',
-                }}
-              >
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span className="ui-pill" style={{ fontSize: '0.72rem' }}>
-                    {getChatRoleLabel(message.role, t)}
-                  </span>
-                  {showTimestamps && (
-                    <span className="ui-meta" style={{ fontSize: '0.72rem' }}>
-                      {formatTime(message.timestamp)}
-                    </span>
-                  )}
-                  {message.role !== 'user' && (
-                    <button
-                      onClick={() => copyMessage(message.content, index)}
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '2px 8px',
-                        opacity: copiedIdx === index ? 1 : 0.5,
-                        transition: 'opacity 0.15s',
-                      }}
-                      title={t('chat.copyMessage')}
-                    >
-                      {copiedIdx === index ? '✓' : '📋'}
-                    </button>
-                  )}
-                </div>
-                <div
-                  style={{
-                    maxWidth: '78%',
-                    padding: '14px 18px',
-                    borderRadius: 18,
-                    background:
-                      message.role === 'user'
-                        ? 'linear-gradient(135deg, rgba(124,140,255,0.32), rgba(124,140,255,0.14))'
-                        : 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    whiteSpace: 'pre-wrap',
-                    lineHeight: 1.65,
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-            {busy && (
-              <div style={{ display: 'grid', gap: 6, justifyItems: 'start' }}>
-                <span className="ui-pill" style={{ fontSize: '0.72rem', width: 'fit-content' }}>
-                  {getChatRoleLabel('assistant', t)}
-                </span>
-                <div
-                  style={{
-                    padding: '14px 18px',
-                    borderRadius: 18,
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
-                >
-                  <TypingIndicator />
-                </div>
-              </div>
-            )}
-            {error && (
-              <div className="ui-status-error" style={{ borderRadius: 12, padding: '10px 14px' }}>
-                {error}
-              </div>
-            )}
-            <div ref={bottomRef} />
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        {chat.messages.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="text-4xl mb-3">💬</div>
+            <p className="text-muted-foreground">Start a conversation with Hermes</p>
           </div>
+        )}
 
-          <div className="ui-card-soft" style={{ padding: 14 }}>
-            <div style={{ display: 'grid', gap: 12 }}>
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={t('chat.placeholder')}
-                style={{ minHeight: 100, resize: 'vertical', borderRadius: 12 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) send()
-                }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <div className="ui-meta">{t('chat.tip')}</div>
-                <button onClick={send} disabled={busy || !draft.trim()}>
-                  {busy ? '…' : t('chat.send')}
+        {chat.messages.map((msg) => (
+          <div key={msg.id} className={cn('flex flex-col', msg.role === 'user' ? 'items-end' : 'items-start')}>
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant={msg.role === 'user' ? 'default' : msg.role === 'assistant' ? 'secondary' : 'muted'} className="text-xs">
+                {msg.role === 'user' ? t('common:chat.user') : msg.role === 'assistant' ? t('common:chat.assistant') : t('common:chat.system')}
+              </Badge>
+              {chat.showTimestamps && (
+                <span className="text-xs text-muted-foreground">{formatTime(msg.timestamp)}</span>
+              )}
+              {msg.role !== 'user' && (
+                <button onClick={() => copyMessage(msg.content)} className="p-1 rounded hover:bg-accent transition-colors" title={t('common:chat.copyMessage')}>
+                  <Copy className="h-3 w-3 text-muted-foreground" />
                 </button>
-              </div>
+              )}
+            </div>
+            <div
+              className={cn(
+                'max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                msg.role === 'user' ? 'bg-primary/15 text-foreground rounded-tr-sm' : 'bg-card border border-border rounded-tl-sm'
+              )}
+              style={{ whiteSpace: 'pre-wrap' }}
+            >
+              {msg.content}
             </div>
           </div>
+        ))}
+
+        {chat.busy && (
+          <div className="flex items-start gap-2">
+            <Badge variant="secondary" className="text-xs mt-1">{t('common:chat.assistant')}</Badge>
+            <div className="bg-card border border-border rounded-2xl rounded-tl-sm px-4 py-3">
+              <TypingDots />
+            </div>
+          </div>
+        )}
+
+        {chat.error && (
+          <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+            {chat.error}
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      <div className="px-6 py-4 border-t border-border">
+        <div className="flex gap-3">
+          <Textarea
+            ref={textareaRef}
+            value={chat.draft}
+            onChange={(e) => chat.setDraft(e.target.value)}
+            placeholder={t('common:chat.placeholder')}
+            className="min-h-[80px] resize-none"
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSend() }}
+          />
+          <div className="flex flex-col gap-2">
+            <Button onClick={handleSend} disabled={chat.busy || !chat.draft.trim()}>
+              <Send className="h-4 w-4 mr-1" />
+              {t('common:chat.send')}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={chat.retryLast} disabled={chat.busy || chat.messages.length === 0}>
+              <RotateCw className="h-3.5 w-3.5 mr-1" />
+              {t('common:chat.retry')}
+            </Button>
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">{t('common:chat.sendTip')}</p>
       </div>
     </div>
   )
