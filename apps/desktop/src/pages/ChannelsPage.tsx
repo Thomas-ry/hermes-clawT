@@ -4,15 +4,36 @@ import { channelCatalog } from '../lib/channelCatalog'
 
 type EnvMap = Record<string, string>
 
+function isSensitiveEnvKey(key: string): boolean {
+  return /TOKEN|PASSWORD|SECRET/i.test(key)
+}
+
 export function ChannelsPage() {
   const { t } = useI18n()
   const [env, setEnv] = useState<EnvMap>({})
   const [draft, setDraft] = useState<EnvMap>({})
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [showSecrets, setShowSecrets] = useState(false)
   const configuredChannelCount = channelCatalog.filter((channel) =>
     channel.fields.some((field) => (draft[field.key] ?? '').trim().length > 0),
   ).length
+  const visibleChannels = channelCatalog.filter((channel) => {
+    if (!query.trim()) {
+      return true
+    }
+
+    const haystack = [
+      t(channel.titleKey),
+      t(channel.descriptionKey),
+      ...channel.fields.map((field) => `${field.key} ${t(field.labelKey)}`),
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    return haystack.includes(query.trim().toLowerCase())
+  })
 
   async function load() {
     try {
@@ -68,18 +89,31 @@ export function ChannelsPage() {
             <div className="ui-toolbar">
               <span className="ui-pill">{t(`channels.totalCount|${channelCatalog.length}`)}</span>
               <span className="ui-pill">{t(`channels.configuredCount|${configuredChannelCount}`)}</span>
+              <span className="ui-pill">{t(`channels.visibleCount|${visibleChannels.length}`)}</span>
             </div>
           </div>
         </div>
       </section>
 
       <div className="ui-toolbar" style={{ marginBottom: 18 }}>
+        <label className="ui-label" style={{ minWidth: 240, marginBottom: 0 }}>
+          <div className="ui-label-text">{t('channels.search')}</div>
+          <input
+            aria-label={t('channels.search')}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('channels.searchPlaceholder')}
+          />
+        </label>
+        <button onClick={() => setShowSecrets((current) => !current)}>
+          {showSecrets ? t('channels.hideSecrets') : t('channels.showSecrets')}
+        </button>
         <button onClick={save}>{t('channels.saveRestart')}</button>
         <button onClick={load}>{t('channels.reload')}</button>
       </div>
 
       <div className="ui-grid ui-grid-two">
-        {channelCatalog.map((channel) => (
+        {visibleChannels.map((channel) => (
           <section key={channel.id} className="ui-card">
             <div className="ui-card-body">
               <h3 className="ui-card-title">{t(channel.titleKey)}</h3>
@@ -95,6 +129,7 @@ export function ChannelsPage() {
                       {t('channels.envKey')}: <span className="ui-code">{field.key}</span>
                     </div>
                     <input
+                      type={isSensitiveEnvKey(field.key) && !showSecrets ? 'password' : 'text'}
                       value={draft[field.key] ?? ''}
                       onChange={(e) => setDraft((prev) => ({ ...prev, [field.key]: e.target.value }))}
                       placeholder={field.placeholder}
@@ -105,6 +140,13 @@ export function ChannelsPage() {
             </div>
           </section>
         ))}
+        {channelCatalog.length > 0 && visibleChannels.length === 0 ? (
+          <section className="ui-card">
+            <div className="ui-card-body">
+              <div className="ui-status-error">{t('channels.noChannelsMatch')}</div>
+            </div>
+          </section>
+        ) : null}
       </div>
 
       <section className="ui-card" style={{ marginTop: 18 }}>

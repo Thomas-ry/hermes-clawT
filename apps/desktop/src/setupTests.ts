@@ -1,4 +1,4 @@
-import { expect } from 'vitest'
+import { expect, vi } from 'vitest'
 import * as matchers from '@testing-library/jest-dom/matchers'
 
 expect.extend(matchers)
@@ -18,6 +18,13 @@ if (typeof window !== 'undefined') {
       clear: () => {
         store.clear()
       },
+    },
+    configurable: true,
+  })
+
+  Object.defineProperty(navigator, 'clipboard', {
+    value: {
+      writeText: vi.fn(async () => undefined),
     },
     configurable: true,
   })

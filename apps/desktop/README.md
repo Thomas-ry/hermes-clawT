@@ -1,30 +1,60 @@
-# React + TypeScript + Vite
+# clawT Desktop App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the Electron desktop application for `clawT`.
 
-Currently, two official plugins are available:
+## Responsibilities
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+The desktop app is responsible for:
 
-## Expanding the ESLint configuration
+- booting and supervising the bundled Hermes runtime
+- exposing a safe IPC surface to the renderer
+- rendering the React-based desktop UI
+- integrating desktop-only concerns such as packaging, updates, and local log streaming
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Structure
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+```text
+electron/        Electron Main, preload, IPC handlers, runtime helpers
+src/             React renderer pages, components, client helpers, tests
+build/           Generated desktop icons used by electron-builder
+public/          Static assets for development and packaging
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Development
+
+Run from the repository root in most cases:
+
+```bash
+pnpm dev
+pnpm lint
+pnpm test
+pnpm build
+```
+
+If you want to work from this directory directly:
+
+```bash
+pnpm dev
+pnpm lint
+pnpm test
+pnpm build
+```
+
+## Packaging
+
+The desktop package scripts expect the bundled Hermes runtime to already exist.
+
+From the repository root:
+
+```bash
+pnpm runtime:build
+pnpm package:mac
+pnpm package:win
+pnpm package:linux
+```
+
+## Notes
+
+- Renderer code should not access Hermes secrets directly.
+- Hermes API requests should continue to flow through Electron Main and preload-exposed APIs.
+- UI changes should be validated with `lint`, `test`, and `build` before packaging changes are considered complete.

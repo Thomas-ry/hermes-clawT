@@ -44,9 +44,13 @@ export function CronPage() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busyAction, setBusyAction] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [stateFilter, setStateFilter] = useState<'all' | 'active' | 'paused'>('all')
   const [outputs, setOutputs] = useState<CronOutputSummary[]>([])
   const [selectedOutputPath, setSelectedOutputPath] = useState<string | null>(null)
   const [selectedOutputContent, setSelectedOutputContent] = useState<string>('')
+  const [outputQuery, setOutputQuery] = useState('')
+  const [outputMessage, setOutputMessage] = useState<string | null>(null)
 
   const [schedule, setSchedule] = useState('every 1h')
   const [prompt, setPrompt] = useState('Write a short daily status note.')
@@ -60,6 +64,33 @@ export function CronPage() {
 
   const selectedJob = jobs.find((job) => job.job_id === selectedJobId) ?? null
   const activeJobCount = jobs.filter((job) => job.state !== 'paused').length
+  const visibleJobs = jobs.filter((job) => {
+    if (stateFilter === 'paused' && job.state !== 'paused') {
+      return false
+    }
+
+    if (stateFilter === 'active' && job.state === 'paused') {
+      return false
+    }
+
+    if (!query.trim()) {
+      return true
+    }
+
+    const haystack = [
+      job.name,
+      job.schedule,
+      job.prompt_preview,
+      Array.isArray(job.deliver) ? job.deliver.join(', ') : job.deliver,
+      job.state,
+      job.paused_reason,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+
+    return haystack.includes(query.trim().toLowerCase())
+  })
   const cronTemplates = [
     {
       name: t('cron.templateDailyName'),
@@ -80,12 +111,20 @@ export function CronPage() {
       prompt: t('cron.templateSkillsPrompt'),
     },
   ]
+  const visibleOutputs = outputs.filter((file) => {
+    if (!outputQuery.trim()) {
+      return true
+    }
+
+    return `${file.fileName} ${file.path}`.toLowerCase().includes(outputQuery.trim().toLowerCase())
+  })
 
   const loadOutputs = useCallback(async (jobId: string | null, preferredPath?: string | null) => {
     if (!jobId) {
       setOutputs([])
       setSelectedOutputPath(null)
       setSelectedOutputContent('')
+      setOutputQuery('')
       return
     }
 
@@ -194,9 +233,83 @@ export function CronPage() {
     }
   }
 
+  async function copySelectedOutput() {
+    try {
+      await navigator.clipboard.writeText(selectedOutputContent)
+      setOutputMessage(t('cron.outputCopied'))
+    } catch (e) {
+      setOutputMessage(`${t('cron.outputCopyFailed')}: ${String(e)}`)
+    }
+  }
+
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  useEffect(() => {
+    if (visibleJobs.length === 0) {
+      if (selectedJobId !== null) {
+        setSelectedJobId(null)
+      }
+      if (editName !== '') {
+        setEditName('')
+      }
+      if (editSchedule !== '') {
+        setEditSchedule('')
+      }
+      if (editPrompt !== '') {
+        setEditPrompt('')
+      }
+      if (editDeliver !== 'local') {
+        setEditDeliver('local')
+      }
+      if (outputs.length > 0) {
+        setOutputs([])
+      }
+      if (selectedOutputPath !== null) {
+        setSelectedOutputPath(null)
+      }
+      if (selectedOutputContent !== '') {
+        setSelectedOutputContent('')
+      }
+      if (outputQuery !== '') {
+        setOutputQuery('')
+      }
+      if (outputMessage !== null) {
+        setOutputMessage(null)
+      }
+      return
+    }
+
+    if (selectedJobId && visibleJobs.some((job) => job.job_id === selectedJobId)) {
+      return
+    }
+
+    const nextSelected = visibleJobs[0]
+    if (!nextSelected) {
+      return
+    }
+
+    setSelectedJobId(nextSelected.job_id)
+    setEditName(nextSelected.name ?? '')
+    setEditSchedule(nextSelected.schedule ?? '')
+    setEditPrompt(nextSelected.prompt_preview ?? '')
+    setEditDeliver(Array.isArray(nextSelected.deliver) ? nextSelected.deliver.join(',') : String(nextSelected.deliver ?? 'local'))
+    loadOutputs(nextSelected.job_id)
+  }, [
+    editDeliver,
+    editName,
+    editPrompt,
+    editSchedule,
+    loadOutputs,
+    outputs.length,
+    outputMessage,
+    outputQuery,
+    selectedJobId,
+    selectedOutputContent,
+    selectedOutputPath,
+    visibleJobs,
+  ])
 
   function applyTemplate(template: { name: string; schedule: string; deliver: string; prompt: string }) {
     setName(template.name)
@@ -225,6 +338,7 @@ export function CronPage() {
             <div className="ui-toolbar">
               <span className="ui-pill">{t(`cron.jobCount|${jobs.length}`)}</span>
               <span className="ui-pill">{t(`cron.activeCount|${activeJobCount}`)}</span>
+              <span className="ui-pill">{t(`cron.visibleCount|${visibleJobs.length}`)}</span>
             </div>
           </div>
 
@@ -285,11 +399,34 @@ export function CronPage() {
                 <h3 className="ui-card-title">{t('cron.jobs')}</h3>
                 <p className="ui-card-description">{jobs.length} jobs</p>
               </div>
-              <button onClick={() => refresh(selectedJobId)}>{t('cron.refresh')}</button>
+              <div className="ui-toolbar">
+                <label className="ui-label" style={{ minWidth: 220, marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.search')}</div>
+                  <input
+                    aria-label={t('cron.search')}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t('cron.searchPlaceholder')}
+                  />
+                </label>
+                <label className="ui-label" style={{ minWidth: 160, marginBottom: 0 }}>
+                  <div className="ui-label-text">{t('cron.stateFilter')}</div>
+                  <select
+                    aria-label={t('cron.stateFilter')}
+                    value={stateFilter}
+                    onChange={(e) => setStateFilter(e.target.value as 'all' | 'active' | 'paused')}
+                  >
+                    <option value="all">{t('cron.allStates')}</option>
+                    <option value="active">{t('cron.activeOnly')}</option>
+                    <option value="paused">{t('cron.pausedOnly')}</option>
+                  </select>
+                </label>
+                <button onClick={() => refresh(selectedJobId)}>{t('cron.refresh')}</button>
+              </div>
             </div>
 
             <div style={{ display: 'grid', gap: 12 }}>
-              {jobs.map((job) => (
+              {visibleJobs.map((job) => (
                 <button
                   key={job.job_id}
                   onClick={() => {
@@ -317,6 +454,8 @@ export function CronPage() {
               ))}
               {jobs.length === 0 ? (
                 <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.jobs')} description={t('cron.noJobsDetailed')} />
+              ) : visibleJobs.length === 0 ? (
+                <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.jobs')} description={t('cron.noJobsMatch')} />
               ) : null}
             </div>
           </div>
@@ -384,11 +523,27 @@ export function CronPage() {
                 <div className="ui-grid ui-grid-two">
                   <div className="ui-card-soft" style={{ padding: 16 }}>
                     <div className="ui-card-title" style={{ fontSize: '0.95rem' }}>{t('cron.savedOutputs')}</div>
+                    <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                      <label className="ui-label" style={{ marginBottom: 0 }}>
+                        <div className="ui-label-text">{t('cron.outputSearch')}</div>
+                        <input
+                          aria-label={t('cron.outputSearch')}
+                          value={outputQuery}
+                          onChange={(e) => {
+                            setOutputQuery(e.target.value)
+                            setOutputMessage(null)
+                          }}
+                          placeholder={t('cron.outputSearchPlaceholder')}
+                        />
+                      </label>
+                      <div className="ui-pill">{t(`cron.visibleOutputs|${visibleOutputs.length}`)}</div>
+                    </div>
                     <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-                      {outputs.map((file) => (
+                      {visibleOutputs.map((file) => (
                         <button
                           key={file.path}
                           onClick={() => {
+                            setOutputMessage(null)
                             setSelectedOutputPath(file.path)
                             window.hermes.cron.outputs
                               .read({ job_id: selectedJob.job_id, path: file.path })
@@ -402,12 +557,20 @@ export function CronPage() {
                       ))}
                       {outputs.length === 0 ? (
                         <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.savedOutputs')} description={t('cron.noOutputs')} />
+                      ) : visibleOutputs.length === 0 ? (
+                        <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.savedOutputs')} description={t('cron.noOutputsMatch')} />
                       ) : null}
                     </div>
                   </div>
 
                   <div className="ui-card-soft" style={{ padding: 16 }}>
-                    <div className="ui-card-title" style={{ fontSize: '0.95rem' }}>{t('cron.outputPreview')}</div>
+                    <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className="ui-card-title" style={{ fontSize: '0.95rem' }}>{t('cron.outputPreview')}</div>
+                      <button onClick={copySelectedOutput} disabled={!selectedOutputContent}>
+                        {t('cron.copyOutput')}
+                      </button>
+                    </div>
+                    {outputMessage ? <div className="ui-status-success" style={{ marginTop: 12 }}>{outputMessage}</div> : null}
                     <pre style={{ margin: '12px 0 0', whiteSpace: 'pre-wrap', maxHeight: 360, overflow: 'auto', color: 'var(--text-secondary)' }}>
                       {selectedOutputContent || t('cron.outputHint')}
                     </pre>
