@@ -1,7 +1,7 @@
 {
   "name": "hermes-clawt",
   "version": "0.1.0",
-  "description": "clawT desktop GUI for Hermes Agent",
+  "description": "Desktop visual client for Hermes Agent, inspired by the ClawX experience",
   "author": {
     "name": "Thomas",
     "email": "thomas@users.noreply.github.com"

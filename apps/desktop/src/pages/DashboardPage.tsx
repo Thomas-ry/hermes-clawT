@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { hermesStatus } from '../lib/hermesClient'
 import { useI18n } from '../i18n'
 import { StatCard } from '../components/StatCard'
@@ -112,6 +113,22 @@ export function DashboardPage() {
     }
   }
 
+  function renderGatewayState(): string {
+    const gatewayState = (status as { gateway?: { state?: string } } | null)?.gateway?.state
+    switch (gatewayState) {
+      case 'running':
+        return t('dashboard.gatewayRunning')
+      case 'starting':
+        return t('dashboard.gatewayStarting')
+      case 'stopping':
+        return t('dashboard.gatewayStopping')
+      case 'error':
+        return t('dashboard.gatewayError')
+      default:
+        return t('dashboard.gatewayStopped')
+    }
+  }
+
   function formatPublishedAt(value?: string): string | null {
     if (!value) return null
     const date = new Date(value)
@@ -131,12 +148,42 @@ export function DashboardPage() {
         <p className="page-description">{t('dashboard.description')}</p>
       </div>
 
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-copy">
+          <span className="ui-pill">{t('dashboard.heroEyebrow')}</span>
+          <h3 className="dashboard-hero-title">{t('dashboard.heroTitle')}</h3>
+          <p className="dashboard-hero-description">{t('dashboard.heroDescription')}</p>
+          <div className="ui-toolbar">
+            <button onClick={refresh}>{t('dashboard.refresh')}</button>
+            <button onClick={() => window.hermes.gateway.restart().then(refresh).catch((e) => setErr(String(e)))}>
+              {t('dashboard.restart')}
+            </button>
+          </div>
+        </div>
+
+        <div className="dashboard-hero-side">
+          <div className="dashboard-callout">
+            <div className="dashboard-callout-label">{t('dashboard.heroStatusLabel')}</div>
+            <div className="dashboard-callout-value">{renderGatewayState()}</div>
+            <div className="dashboard-callout-meta">
+              {runtime?.gatewayPort
+                ? `${t('dashboard.gatewayPort')}: ${runtime.gatewayPort}`
+                : t('dashboard.snapshotLoading')}
+            </div>
+          </div>
+          <div className="dashboard-callout">
+            <div className="dashboard-callout-label">{t('dashboard.heroWorkflowLabel')}</div>
+            <div className="dashboard-callout-meta">{t('dashboard.heroWorkflowDescription')}</div>
+          </div>
+        </div>
+      </section>
+
       <div className="ui-stat-grid" style={{ marginBottom: 18 }}>
         <StatCard
           icon={<DashboardIcon width={18} height={18} />}
-          label={t('dashboard.gatewayPort')}
-          value={runtime?.gatewayPort ? String(runtime.gatewayPort) : '—'}
-          hint={t('dashboard.gatewaySnapshot')}
+          label={t('dashboard.gatewayStatusTitle')}
+          value={renderGatewayState()}
+          hint={runtime?.gatewayPort ? `${t('dashboard.gatewayPort')}: ${runtime.gatewayPort}` : t('dashboard.snapshotLoading')}
         />
         <StatCard
           icon={<ArrowCircleIcon width={18} height={18} />}
@@ -151,6 +198,31 @@ export function DashboardPage() {
           hint={formatPublishedAt(releaseFeed?.publishedAt) ?? t('dashboard.releaseNotesLoading')}
         />
       </div>
+
+      <section className="ui-card" style={{ marginBottom: 18 }}>
+        <div className="ui-card-body">
+          <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div>
+              <h3 className="ui-card-title">{t('dashboard.quickStartTitle')}</h3>
+              <p className="ui-card-description">{t('dashboard.quickStartDescription')}</p>
+            </div>
+          </div>
+          <div className="dashboard-quick-grid">
+            <Link to="/chat" className="dashboard-quick-link">
+              <div className="dashboard-quick-title">{t('dashboard.quickChatTitle')}</div>
+              <div className="dashboard-quick-description">{t('dashboard.quickChatDescription')}</div>
+            </Link>
+            <Link to="/cron" className="dashboard-quick-link">
+              <div className="dashboard-quick-title">{t('dashboard.quickCronTitle')}</div>
+              <div className="dashboard-quick-description">{t('dashboard.quickCronDescription')}</div>
+            </Link>
+            <Link to="/skills" className="dashboard-quick-link">
+              <div className="dashboard-quick-title">{t('dashboard.quickSkillsTitle')}</div>
+              <div className="dashboard-quick-description">{t('dashboard.quickSkillsDescription')}</div>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <div className="ui-grid ui-grid-two">
         <section className="ui-card">

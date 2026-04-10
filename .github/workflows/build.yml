@@ -9,6 +9,8 @@ on:
         default: '18140199c3a1cbb658a2eeadf692ffb8b5d1626f'
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:

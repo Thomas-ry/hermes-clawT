@@ -10,6 +10,9 @@ export function ChannelsPage() {
   const [draft, setDraft] = useState<EnvMap>({})
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
+  const configuredChannelCount = channelCatalog.filter((channel) =>
+    channel.fields.some((field) => (draft[field.key] ?? '').trim().length > 0),
+  ).length
 
   async function load() {
     try {
@@ -55,7 +58,22 @@ export function ChannelsPage() {
       {error ? <div className="ui-status-error">{error}</div> : null}
       {saved ? <div className="ui-status-success" style={{ marginTop: error ? 12 : 0 }}>{saved}</div> : null}
 
-      <div className="ui-toolbar" style={{ marginTop: 18, marginBottom: 18 }}>
+      <section className="ui-card" style={{ marginTop: 18, marginBottom: 18 }}>
+        <div className="ui-card-body">
+          <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div>
+              <h3 className="ui-card-title">{t('channels.overviewTitle')}</h3>
+              <p className="ui-card-description">{t('channels.overviewDescription')}</p>
+            </div>
+            <div className="ui-toolbar">
+              <span className="ui-pill">{t(`channels.totalCount|${channelCatalog.length}`)}</span>
+              <span className="ui-pill">{t(`channels.configuredCount|${configuredChannelCount}`)}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="ui-toolbar" style={{ marginBottom: 18 }}>
         <button onClick={save}>{t('channels.saveRestart')}</button>
         <button onClick={load}>{t('channels.reload')}</button>
       </div>
@@ -66,6 +84,9 @@ export function ChannelsPage() {
             <div className="ui-card-body">
               <h3 className="ui-card-title">{t(channel.titleKey)}</h3>
               <p className="ui-card-description">{t(channel.descriptionKey)}</p>
+              <div className="ui-meta" style={{ marginTop: 10 }}>
+                {t(`channels.channelConfigured|${channel.fields.some((field) => (draft[field.key] ?? '').trim().length > 0) ? t('channels.configured') : t('channels.notConfigured')}`)}
+              </div>
               <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
                 {channel.fields.map((field) => (
                   <label key={field.key} className="ui-label" style={{ marginBottom: 0 }}>

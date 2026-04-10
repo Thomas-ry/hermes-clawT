@@ -20,6 +20,10 @@ export function AppLayout() {
     <div className="hc-root">
       <aside className="hc-sidebar">
         <div className="hc-brand">{t('app.brand')}</div>
+        <div className="hc-brand-meta">
+          <span className="ui-pill">{t('app.sidebarMode')}</span>
+          <span className="ui-pill">{t('app.sidebarRuntime')}</span>
+        </div>
         <nav className="hc-nav">
           {NAV_ITEMS.map((item) => (
             <NavLink
@@ -35,7 +39,7 @@ export function AppLayout() {
         <div className="hc-sidebar-footer">
           <span className="ui-pill">
             <ArrowCircleIcon width={14} height={14} />
-            Hermes runtime
+            {t('app.sidebarRuntime')}
           </span>
         </div>
       </aside>

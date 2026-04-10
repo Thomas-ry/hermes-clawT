@@ -3,6 +3,7 @@ import { HashRouter } from 'react-router-dom'
 import { beforeEach, test, expect } from 'vitest'
 import { App } from './App'
 import { I18nProvider } from './i18n'
+import { ROUTER_FUTURE_FLAGS } from './lib/routerFuture'
 
 beforeEach(() => {
   window.localStorage.removeItem('clawt.language')
@@ -11,7 +12,7 @@ beforeEach(() => {
 test('renders navigation', () => {
   render(
     <I18nProvider>
-      <HashRouter>
+      <HashRouter future={ROUTER_FUTURE_FLAGS}>
         <App />
       </HashRouter>
     </I18nProvider>,

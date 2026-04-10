@@ -35,13 +35,22 @@
 }
 
 .hc-brand::after {
-  content: 'Hermes desktop cockpit';
+  content: 'Hermes mission control';
   display: block;
   margin-top: 6px;
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-muted);
   letter-spacing: 0;
+}
+
+.hc-brand-meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
 .hc-nav {

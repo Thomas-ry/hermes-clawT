@@ -2,7 +2,7 @@
   "name": "clawt-desktop",
   "private": true,
   "version": "0.1.0",
-  "description": "clawT desktop GUI for Hermes Agent with a bundled runtime",
+  "description": "Desktop visual client for Hermes Agent with a bundled runtime",
   "author": {
     "name": "Thomas",
     "email": "thomas@users.noreply.github.com"

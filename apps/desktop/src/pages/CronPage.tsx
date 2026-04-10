@@ -59,6 +59,27 @@ export function CronPage() {
   const [editDeliver, setEditDeliver] = useState('local')
 
   const selectedJob = jobs.find((job) => job.job_id === selectedJobId) ?? null
+  const activeJobCount = jobs.filter((job) => job.state !== 'paused').length
+  const cronTemplates = [
+    {
+      name: t('cron.templateDailyName'),
+      schedule: 'every day at 09:00',
+      deliver: 'local',
+      prompt: t('cron.templateDailyPrompt'),
+    },
+    {
+      name: t('cron.templateWorkspaceName'),
+      schedule: 'every 4h',
+      deliver: 'local',
+      prompt: t('cron.templateWorkspacePrompt'),
+    },
+    {
+      name: t('cron.templateSkillsName'),
+      schedule: 'every monday at 10:00',
+      deliver: 'local',
+      prompt: t('cron.templateSkillsPrompt'),
+    },
+  ]
 
   const loadOutputs = useCallback(async (jobId: string | null, preferredPath?: string | null) => {
     if (!jobId) {
@@ -177,6 +198,14 @@ export function CronPage() {
     refresh()
   }, [refresh])
 
+  function applyTemplate(template: { name: string; schedule: string; deliver: string; prompt: string }) {
+    setName(template.name)
+    setSchedule(template.schedule)
+    setDeliver(template.deliver)
+    setPrompt(template.prompt)
+    setError(null)
+  }
+
   return (
     <div className="page-shell">
       <div className="page-header">
@@ -185,6 +214,37 @@ export function CronPage() {
       </div>
 
       {error ? <div className="ui-status-error">{error}</div> : null}
+
+      <section className="ui-card" style={{ marginTop: 18 }}>
+        <div className="ui-card-body">
+          <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div>
+              <h3 className="ui-card-title">{t('cron.overviewTitle')}</h3>
+              <p className="ui-card-description">{t('cron.overviewDescription')}</p>
+            </div>
+            <div className="ui-toolbar">
+              <span className="ui-pill">{t(`cron.jobCount|${jobs.length}`)}</span>
+              <span className="ui-pill">{t(`cron.activeCount|${activeJobCount}`)}</span>
+            </div>
+          </div>
+
+          <div className="cron-template-grid">
+            {cronTemplates.map((template) => (
+              <button
+                key={template.name}
+                type="button"
+                className="cron-template-button"
+                onClick={() => applyTemplate(template)}
+                disabled={busyAction === 'create'}
+              >
+                <div className="dashboard-quick-title">{template.name}</div>
+                <div className="dashboard-quick-description">{template.prompt}</div>
+                <div className="ui-meta">{template.schedule}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <div className="ui-grid ui-grid-two" style={{ marginTop: 18 }}>
         <section className="ui-card">
@@ -213,6 +273,7 @@ export function CronPage() {
                   {busyAction === 'create' ? t('cron.creating') : t('cron.create')}
                 </button>
               </div>
+              <div className="ui-meta">{t('cron.createHint')}</div>
             </div>
           </div>
         </section>
@@ -249,10 +310,13 @@ export function CronPage() {
                   <div className="ui-meta" style={{ marginTop: 6 }}>
                     {job.next_run_at ? `${t('cron.next')} ${job.next_run_at}` : t('cron.defaultValue')}
                   </div>
+                  <div className="ui-meta" style={{ marginTop: 6 }}>
+                    {t('cron.deliver')}: {Array.isArray(job.deliver) ? job.deliver.join(', ') : String(job.deliver ?? 'local')}
+                  </div>
                 </button>
               ))}
               {jobs.length === 0 ? (
-                <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.jobs')} description={t('cron.noJobs')} />
+                <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.jobs')} description={t('cron.noJobsDetailed')} />
               ) : null}
             </div>
           </div>
@@ -352,7 +416,9 @@ export function CronPage() {
               </div>
             </div>
           ) : (
-            <div className="ui-meta" style={{ marginTop: 18 }}>{t('cron.pickJob')}</div>
+            <div style={{ marginTop: 18 }}>
+              <EmptyState icon={<ClockIcon width={20} height={20} />} title={t('cron.selectedJob')} description={t('cron.pickJob')} />
+            </div>
           )}
         </div>
       </section>

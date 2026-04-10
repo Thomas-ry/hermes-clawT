@@ -26,6 +26,13 @@ export function SettingsPage() {
   const [terminalBackend, setTerminalBackend] = useState('local')
   const [terminalTimeout, setTerminalTimeout] = useState('180')
   const [terminalCwd, setTerminalCwd] = useState('.')
+  const configFieldCount = [
+    model.trim() ? 1 : 0,
+    maxTurns.trim() ? 1 : 0,
+    terminalBackend.trim() ? 1 : 0,
+    terminalTimeout.trim() ? 1 : 0,
+    terminalCwd.trim() ? 1 : 0,
+  ].reduce((sum, value) => sum + value, 0)
 
   function applyConfig(next: ConfigShape) {
     setConfig(next)
@@ -131,7 +138,22 @@ export function SettingsPage() {
       {error ? <div className="ui-status-error">{error}</div> : null}
       {saved ? <div className="ui-status-success" style={{ marginTop: error ? 12 : 0 }}>{saved}</div> : null}
 
-      <div className="ui-grid ui-grid-two" style={{ marginTop: 18 }}>
+      <section className="ui-card" style={{ marginTop: 18, marginBottom: 18 }}>
+        <div className="ui-card-body">
+          <div className="ui-toolbar" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+            <div>
+              <h3 className="ui-card-title">{t('settings.overviewTitle')}</h3>
+              <p className="ui-card-description">{t('settings.overviewDescription')}</p>
+            </div>
+            <div className="ui-toolbar">
+              <span className="ui-pill">{t(`settings.languagePill|${language}`)}</span>
+              <span className="ui-pill">{t(`settings.fieldCount|${configFieldCount}`)}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="ui-grid ui-grid-two">
         <section className="ui-card">
           <div className="ui-card-body">
             <h3 className="ui-card-title">{t('settings.languageTitle')}</h3>
@@ -189,7 +211,7 @@ export function SettingsPage() {
 
         <section className="ui-card">
           <div className="ui-card-body">
-            <h3 className="ui-card-title">clawT</h3>
+            <h3 className="ui-card-title">clawT for Hermes Agent</h3>
             <p className="ui-card-description">{t('settings.portabilityDescription')}</p>
             <div className="ui-toolbar" style={{ marginTop: 18 }}>
               <button onClick={save} disabled={loading}>{t('settings.save')}</button>

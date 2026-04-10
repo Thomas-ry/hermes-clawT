@@ -1,13 +1,57 @@
 # clawT
 
-Hermes Agent 的桌面可视化客户端，目标是做成 “Hermes 版 ClawX”。
+`clawT` 是一个面向 `Hermes Agent` 的桌面可视化客户端。
+
+它的目标不是做一个通用 Electron 壳，而是提供一套类似 `OpenClaw / ClawX` 的桌面体验，但服务于 `Hermes Agent` 的工作流：聊天、定时任务、技能、渠道、运行时管理和桌面分发。
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Build](https://github.com/Thomas-ry/hermes-clawT/actions/workflows/build.yml/badge.svg)](https://github.com/Thomas-ry/hermes-clawT/actions/workflows/build.yml)
+
+## 开源状态
+
+这个项目按 MIT License 开源，欢迎 issue、讨论和 pull request。
+
+在正式公开前后，建议优先检查：
+- 是否误提交任何 `.env`、token、密钥或个人本机路径
+- 打包产物和运行时缓存是否仍然被 `.gitignore` 正确忽略
+- README、截图和日志中是否包含敏感信息
+
+开源协作入口：
+- 贡献指南见 [CONTRIBUTING.md](./CONTRIBUTING.md)
+- 安全问题请看 [SECURITY.md](./SECURITY.md)
+- 社区行为准则见 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
+- 计划路线见 [ROADMAP.md](./ROADMAP.md)
+
+## 项目定位
+
+可以把 `clawT` 理解为：
+
+- `Hermes Agent` 的桌面 GUI
+- 一个“电池内置”的 Hermes runtime 宿主
+- 一个受 `ClawX` 启发、但并不试图伪装成 `ClawX` 分支的独立项目
+
+当前优先级：
+
+- 让 Hermes Agent 在桌面端更容易上手
+- 把常见 Hermes 工作流做成可视化页面
+- 保持打包、更新和分发链路对普通用户足够友好
 
 当前已经具备：
 - Electron Main 托管 bundled Hermes Gateway
 - Chat / Cron / Skills / Channels / Settings / Logs 页面
 - 中英文界面切换（设置页持久化）
 - 三平台打包脚手架
-- 私有仓库 CI 构建工作流
+- GitHub Actions 构建与发布工作流
+
+## 核心能力
+
+- Chat: 通过 Main 进程代理访问本地 Hermes OpenAI 兼容接口
+- Cron: 创建、编辑、执行和查看 Hermes 定时任务
+- Skills: 浏览和管理 Hermes skills
+- Channels: 配置 Telegram、Discord、Slack 等渠道环境变量
+- Settings: 编辑 Hermes runtime 配置并导入导出
+- Logs: 直接观察 Hermes Gateway stdout / stderr
+- Packaging: 输出 macOS / Windows / Linux 桌面安装包
 
 ## 开发（本机）
 
@@ -35,6 +79,18 @@ pnpm package:mac     # 或 package:win / package:linux
 ```
 
 如果没有先执行 `pnpm runtime:build`，打包命令会直接失败并提示缺少 bundled runtime。
+
+## 为开源贡献做准备
+
+如果你准备提交 PR，推荐先执行：
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
+
+如果改动涉及打包、自动更新或 bundled runtime，请在 PR 描述中说明验证范围和未覆盖部分。
 
 ## 发布准备
 
@@ -135,3 +191,12 @@ git push origin v0.1.1
 
 - Hermes Gateway 由 Electron Main 进程托管（自动启动/重启），并启用本机 OpenAI 兼容 API server。
 - UI 通过 Main 进程代理访问 `http://127.0.0.1:<port>/v1/...`，避免在渲染进程暴露 `API_SERVER_KEY`。
+
+## 长期方向
+
+接下来会继续把 `clawT` 往真正可公开协作和可公开分发的 `Hermes Agent desktop client` 打磨，包括：
+
+- 更完整的 onboarding 和连接向导
+- 更成熟的 Chat / Cron / Skills 信息架构
+- 更清晰的 Hermes 运行状态可视化
+- 面向开源社区的文档、模板和发布节奏
