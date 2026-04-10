@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { hermesStatus } from '../lib/hermesClient'
 import { useI18n } from '../i18n'
 import { StatCard } from '../components/StatCard'
-import { ArrowCircleIcon, ClockIcon, DashboardIcon, ServerIcon } from '../components/icons'
+import { ArrowCircleIcon, ClockIcon, ServerIcon } from '../components/icons'
 import { fetchReleaseFeedSummary, PUBLIC_UPDATE_FEED_URL, type ReleaseFeedSummary } from '../lib/releaseFeed'
 import { useToast } from '../components/Toast'
 
