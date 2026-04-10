@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0c1220;
+  --color-foreground: rgba(245, 247, 255, 0.96);
+  --color-card: rgba(14, 22, 38, 0.78);
+  --color-card-foreground: rgba(245, 247, 255, 0.96);
+  --color-popover: rgba(14, 22, 38, 0.92);
+  --color-popover-foreground: rgba(245, 247, 255, 0.96);
+  --color-primary: #7c8cff;
+  --color-primary-foreground: rgba(245, 247, 255, 0.96);
+  --color-secondary: rgba(255, 255, 255, 0.06);
+  --color-secondary-foreground: rgba(245, 247, 255, 0.88);
+  --color-muted: rgba(255, 255, 255, 0.04);
+  --color-muted-foreground: rgba(196, 205, 227, 0.58);
+  --color-accent: rgba(255, 255, 255, 0.08);
+  --color-accent-foreground: rgba(245, 247, 255, 0.88);
+  --color-destructive: #ff6b6b;
+  --color-destructive-foreground: rgba(245, 247, 255, 0.96);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: rgba(255, 255, 255, 0.06);
+  --color-ring: #7c8cff;
+  --color-success: #4ade80;
+  --color-success-soft: rgba(74, 222, 128, 0.16);
+  --color-danger-soft: rgba(248, 113, 113, 0.14);
+  --color-warning: #fbbf24;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background: #0c1220;
+    color: var(--color-foreground);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    color: #c8d0ff;
+  }
+
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  input, textarea, select {
+    outline: none;
+  }
+}
+
+/* Title bar drag region */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-ring);
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease forwards;
+}
+
+/* Slide in from right */
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease forwards;
+}
+
+/* Pulse glow for status */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  50% { opacity: 0.6; box-shadow: 0 0 14px currentColor; }
+}
+.animate-status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Typing dots */
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+.animate-typing-dot {
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
