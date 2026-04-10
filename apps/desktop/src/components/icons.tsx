@@ -90,3 +90,16 @@ export function ArrowCircleIcon(props: IconProps) {
     </BaseIcon>
   )
 }
+
+export function ServerIcon(props: IconProps) {
+  return (
+    <BaseIcon {...props}>
+      <rect x="3" y="4" width="18" height="4" rx="1" />
+      <rect x="3" y="10" width="18" height="4" rx="1" />
+      <rect x="3" y="16" width="18" height="4" rx="1" />
+      <circle cx="7" cy="6" r="0.8" fill="currentColor" />
+      <circle cx="7" cy="12" r="0.8" fill="currentColor" />
+      <circle cx="7" cy="18" r="0.8" fill="currentColor" />
+    </BaseIcon>
+  )
+}
